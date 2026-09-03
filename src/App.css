@@ -180,3 +180,34 @@
 .empty-results p {
   color: #888888;
 }
+
+.results-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.result-row {
+  display: grid;
+  grid-template-columns: 80px 2fr 2fr 100px;
+  align-items: center;
+  padding: 16px 20px;
+  border-top: 1px solid #303030;
+}
+
+.result-row:first-child {
+  border-top: none;
+}
+
+.result-row:hover {
+  background-color: #282828;
+}
+
+.result-row span {
+  color: #d8d8d8;
+  font-size: 14px;
+}
+
+.result-row span:first-child {
+  color: #ffffff;
+  font-weight: bold;
+}
