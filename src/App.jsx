@@ -1,58 +1,34 @@
-import { useEffect, useState } from 'react'
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+  useEffect,
+  useState,
+} from 'react'
+
 import {
-  GetRaceSessions,
-  GetRaceResults,
-  GetDrivers,
   GetDriverChampionship,
+  GetDrivers,
+  GetRaceResults,
+  GetRaceSessions,
 } from './Api/OpenF1Api'
+
+import DashboardHeader from './Components/DashboardHeader'
+import DriverPointsChart from './Components/DriverPointsChart'
+import RaceList from './Components/RaceList'
+import RaceSummary from './Components/RaceSummary'
+import ResultsTable from './Components/ResultsTable'
+import TeamPointsChart from './Components/TeamPointsChart'
+
 import './App.css'
 
-function DriverPointsTooltip({
-  active,
-  payload,
-}) {
-  if (
-    !active ||
-    !payload ||
-    payload.length === 0
-  ) {
-    return null
-  }
-
-  const DriverData =
-    payload[0].payload
-
-  return (
-    <div className="driver-tooltip">
-      <strong>
-        {DriverData.fullName}
-      </strong>
-
-      <span>
-        Points: {DriverData.points}
-      </span>
-    </div>
-  )
-}
-
 function App() {
-  const [Season, setSeason] =
-    useState(2025)
+  const [
+    Season,
+    setSeason,
+  ] = useState(2025)
 
-  const [Races, setRaces] =
-    useState([])
+  const [
+    Races,
+    setRaces,
+  ] = useState([])
 
   const [
     SelectedRace,
@@ -164,7 +140,9 @@ function App() {
           return
         }
 
-        setRaces(RaceData)
+        setRaces(
+          RaceData
+        )
       } catch (Error) {
         if (
           Controller.signal.aborted
@@ -172,7 +150,9 @@ function App() {
           return
         }
 
-        console.error(Error)
+        console.error(
+          Error
+        )
 
         setErrorMessage(
           'We could not retrieve the race list from OpenF1.'
@@ -183,7 +163,9 @@ function App() {
         if (
           !Controller.signal.aborted
         ) {
-          setIsLoading(false)
+          setIsLoading(
+            false
+          )
         }
       }
     }
@@ -237,7 +219,9 @@ function App() {
               SelectedRace.session_key,
               Controller.signal
             )
-        } catch (PointsError) {
+        } catch (
+          PointsError
+        ) {
           if (
             Controller.signal.aborted
           ) {
@@ -259,7 +243,9 @@ function App() {
             (Result) => {
               const Driver =
                 DriverData.find(
-                  (DriverItem) =>
+                  (
+                    DriverItem
+                  ) =>
                     DriverItem.driver_number ===
                     Result.driver_number
                 )
@@ -339,7 +325,9 @@ function App() {
           return
         }
 
-        console.error(Error)
+        console.error(
+          Error
+        )
 
         setResultsErrorMessage(
           'We could not retrieve the results for this race.'
@@ -367,24 +355,18 @@ function App() {
     ResultsReloadKey,
   ])
 
-  function StopChartEvent(
-    EventArguments
-  ) {
-    const Event =
-      EventArguments.find(
-        (Argument) =>
-          typeof Argument
-            ?.stopPropagation ===
-          'function'
-      )
-
-    Event?.stopPropagation()
-  }
-
   function ClearAnalyticsSelections() {
-    setHoveredTeamIndex(null)
-    setSelectedTeamIndex(null)
-    setSelectedDriverPoint(null)
+    setHoveredTeamIndex(
+      null
+    )
+
+    setSelectedTeamIndex(
+      null
+    )
+
+    setSelectedDriverPoint(
+      null
+    )
   }
 
   function ChangeSeason(
@@ -398,7 +380,9 @@ function App() {
       return
     }
 
-    setSeason(NewSeason)
+    setSeason(
+      NewSeason
+    )
 
     setRaces([])
     setSelectedRace(null)
@@ -414,13 +398,18 @@ function App() {
     setIsResultsLoading(false)
   }
 
-  function SelectRace(Race) {
-    if (IsResultsLoading) {
+  function SelectRace(
+    Race
+  ) {
+    if (
+      IsResultsLoading
+    ) {
       return
     }
 
     if (
-      SelectedRace?.session_key ===
+      SelectedRace
+        ?.session_key ===
       Race.session_key
     ) {
       return
@@ -433,15 +422,23 @@ function App() {
     setResultsErrorMessage('')
     setPointsWarningMessage('')
 
-    setIsResultsLoading(true)
+    setIsResultsLoading(
+      true
+    )
 
-    setSelectedRace(Race)
+    setSelectedRace(
+      Race
+    )
   }
 
   function RetryRaceList() {
     setRaces([])
+
     setErrorMessage('')
-    setIsLoading(true)
+
+    setIsLoading(
+      true
+    )
 
     setRaceReloadKey(
       (CurrentKey) =>
@@ -460,7 +457,10 @@ function App() {
 
     setResultsErrorMessage('')
     setPointsWarningMessage('')
-    setIsResultsLoading(true)
+
+    setIsResultsLoading(
+      true
+    )
 
     setResultsReloadKey(
       (CurrentKey) =>
@@ -468,258 +468,39 @@ function App() {
     )
   }
 
-  function SelectDriverChartPoint(
-    DriverData,
-    EventArguments
+  function SelectDriverPoint(
+    DriverData
   ) {
-    StopChartEvent(
-      EventArguments
-    )
-
     setSelectedDriverPoint(
       DriverData
     )
 
-    setSelectedTeamIndex(null)
+    setSelectedTeamIndex(
+      null
+    )
+
+    setHoveredTeamIndex(
+      null
+    )
   }
 
   function SelectTeam(
-    Index,
-    EventArguments
+    Index
   ) {
-    StopChartEvent(
-      EventArguments
-    )
-
     setSelectedTeamIndex(
       Index
     )
 
-    setSelectedDriverPoint(null)
-  }
-
-  function FormatRaceDate(
-    DateValue
-  ) {
-    if (!DateValue) {
-      return 'Date unavailable'
-    }
-
-    return new Date(
-      DateValue
-    ).toLocaleDateString(
-      'en-GB',
-      {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }
+    setSelectedDriverPoint(
+      null
     )
   }
 
-  function GetPositionDisplay(
-    Result
-  ) {
-    if (
-      Result.position !== null &&
-      Result.position !== undefined
-    ) {
-      return Result.position
-    }
-
-    if (Result.dsq) {
-      return 'DSQ'
-    }
-
-    if (Result.dns) {
-      return 'DNS'
-    }
-
-    if (Result.dnf) {
-      return 'DNF'
-    }
-
-    return '—'
-  }
-
-  function GetPointsDisplay(
-    Result
-  ) {
-    if (
-      Result.points === null ||
-      Result.points === undefined
-    ) {
-      return '—'
-    }
-
-    return Result.points
-  }
-
-  function GetShortDriverName(
-    FullName
-  ) {
-    if (!FullName) {
-      return 'Unknown'
-    }
-
-    const NameParts =
-      FullName
-        .trim()
-        .split(' ')
-
-    return NameParts[
-      NameParts.length - 1
-    ]
-  }
-
-  function GetDriverChartLabel(
-    FullName
-  ) {
-    const Surname =
-      GetShortDriverName(
-        FullName
-      )
-
-    return Surname
-      .substring(0, 5)
-      .toUpperCase()
-  }
-
-  const Winner =
-    RaceResults.find(
-      (Result) =>
-        Result.position === 1
-    ) ?? null
-
-  const ClassifiedDrivers =
-    RaceResults.filter(
-      (Result) =>
-        Result.position !== null &&
-        Result.position !==
-          undefined
-    ).length
-
-  const PointsChartData =
-    RaceResults
-      .filter(
-        (Result) =>
-          Result.points !==
-            null &&
-          Result.points !==
-            undefined &&
-          Result.points > 0
-      )
-      .map((Result) => ({
-        driver:
-          GetDriverChartLabel(
-            Result.full_name
-          ),
-
-        fullName:
-          Result.full_name,
-
-        points:
-          Result.points,
-      }))
-      .sort(
-        (
-          ResultA,
-          ResultB
-        ) =>
-          ResultB.points -
-          ResultA.points
-      )
-      .slice(0, 10)
-
-  const TeamPointsMap = {}
-
-  RaceResults.forEach(
-    (Result) => {
-      if (
-        Result.points === null ||
-        Result.points ===
-          undefined ||
-        Result.points <= 0 ||
-        Result.team_name ===
-          'Team unavailable'
-      ) {
-        return
-      }
-
-      if (
-        !TeamPointsMap[
-          Result.team_name
-        ]
-      ) {
-        TeamPointsMap[
-          Result.team_name
-        ] = {
-          team:
-            Result.team_name,
-
-          points: 0,
-
-          colour:
-            Result.team_colour
-              ? `#${Result.team_colour}`
-              : null,
-        }
-      }
-
-      TeamPointsMap[
-        Result.team_name
-      ].points +=
-        Result.points
-    }
-  )
-
-  const FallbackColours = [
-    '#e10600',
-    '#ff8700',
-    '#00a19c',
-    '#6c98ff',
-    '#b6babd',
-  ]
-
-  const TeamPointsData =
-    Object.values(
-      TeamPointsMap
-    )
-      .sort(
-        (
-          TeamA,
-          TeamB
-        ) =>
-          TeamB.points -
-          TeamA.points
-      )
-      .slice(0, 5)
-      .map(
-        (
-          Team,
-          Index
-        ) => ({
-          ...Team,
-
-          colour:
-            Team.colour ??
-            FallbackColours[
-              Index
-            ],
-        })
-      )
-
-  const ActiveTeamIndex =
-    HoveredTeamIndex !== null
-      ? HoveredTeamIndex
-      : SelectedTeamIndex
-
-  const ActiveTeam =
-    ActiveTeamIndex !== null
-      ? TeamPointsData[
-          ActiveTeamIndex
-        ]
-      : null
+  const CanShowAnalytics =
+    SelectedRace &&
+    !IsResultsLoading &&
+    !ResultsErrorMessage &&
+    RaceResults.length > 0
 
   return (
     <div
@@ -728,1012 +509,118 @@ function App() {
         ClearAnalyticsSelections
       }
     >
-      <header className="dashboard-header">
-        <div>
-          <p className="dashboard-label">
-            FORMULA 1
-          </p>
-
-          <h1>
-            Race Dashboard
-          </h1>
-        </div>
-
-        <div className="season-selector">
-          <label htmlFor="season">
-            Season
-          </label>
-
-          <select
-            id="season"
-            value={Season}
-            disabled={
-              IsLoading ||
-              IsResultsLoading
-            }
-            onChange={(Event) =>
-              ChangeSeason(
-                Number(
-                  Event.target.value
-                )
-              )
-            }
-          >
-            <option value="2025">
-              2025
-            </option>
-
-            <option value="2024">
-              2024
-            </option>
-
-            <option value="2023">
-              2023
-            </option>
-          </select>
-        </div>
-      </header>
+      <DashboardHeader
+        Season={Season}
+        IsLoading={
+          IsLoading
+        }
+        IsResultsLoading={
+          IsResultsLoading
+        }
+        ChangeSeason={
+          ChangeSeason
+        }
+      />
 
       <main className="dashboard-content">
-        <aside className="race-panel">
-          <div className="panel-heading">
-            <p>RACES</p>
-
-            <span>
-              {IsLoading
-                ? 'Loading...'
-                : ErrorMessage
-                  ? 'Unavailable'
-                  : `${Races.length} races`}
-            </span>
-          </div>
-
-          <div className="race-list">
-            {IsLoading && (
-              <div className="sidebar-state">
-                <div className="loading-spinner"></div>
-
-                <p>
-                  Loading races...
-                </p>
-              </div>
-            )}
-
-            {!IsLoading &&
-              ErrorMessage && (
-                <div className="sidebar-state error-state">
-                  <strong>
-                    Unable to load races
-                  </strong>
-
-                  <p>
-                    {ErrorMessage}
-                  </p>
-
-                  <button
-                    className="retry-button"
-                    onClick={
-                      RetryRaceList
-                    }
-                  >
-                    Try Again
-                  </button>
-                </div>
-              )}
-
-            {!IsLoading &&
-              !ErrorMessage &&
-              Races.length === 0 && (
-                <div className="sidebar-state">
-                  <strong>
-                    No races found
-                  </strong>
-
-                  <p>
-                    There are no races
-                    available for this
-                    season.
-                  </p>
-                </div>
-              )}
-
-            {!IsLoading &&
-              !ErrorMessage &&
-              Races.map(
-                (
-                  Race,
-                  Index
-                ) => (
-                  <button
-                    className={
-                      SelectedRace
-                        ?.session_key ===
-                      Race.session_key
-                        ? 'race-card selected'
-                        : 'race-card'
-                    }
-                    key={
-                      Race.session_key
-                    }
-                    onClick={() =>
-                      SelectRace(
-                        Race
-                      )
-                    }
-                    disabled={
-                      IsResultsLoading
-                    }
-                  >
-                    <span className="race-round">
-                      Round{' '}
-                      {Index + 1}
-                    </span>
-
-                    <strong>
-                      {
-                        Race.location
-                      }{' '}
-                      Grand Prix
-                    </strong>
-
-                    <span>
-                      {
-                        Race.country_name
-                      }
-                      {' • '}
-                      {
-                        Race.circuit_short_name
-                      }
-                    </span>
-                  </button>
-                )
-              )}
-          </div>
-        </aside>
+        <RaceList
+          Races={Races}
+          SelectedRace={
+            SelectedRace
+          }
+          IsLoading={
+            IsLoading
+          }
+          ErrorMessage={
+            ErrorMessage
+          }
+          IsResultsLoading={
+            IsResultsLoading
+          }
+          SelectRace={
+            SelectRace
+          }
+          RetryRaceList={
+            RetryRaceList
+          }
+        />
 
         <section className="results-panel">
-          {SelectedRace ? (
-            <div className="race-information">
-              <p className="dashboard-label">
-                SELECTED RACE
-              </p>
+          <RaceSummary
+            SelectedRace={
+              SelectedRace
+            }
+            RaceResults={
+              RaceResults
+            }
+            IsResultsLoading={
+              IsResultsLoading
+            }
+            ResultsErrorMessage={
+              ResultsErrorMessage
+            }
+          />
 
-              <h2>
-                {
-                  SelectedRace.location
-                }{' '}
-                Grand Prix
-              </h2>
-
-              <p>
-                {
-                  SelectedRace.country_name
+          {CanShowAnalytics && (
+            <>
+              <DriverPointsChart
+                RaceResults={
+                  RaceResults
                 }
-                {' • '}
-                {
-                  SelectedRace.circuit_short_name
+                IsCompactLayout={
+                  IsCompactLayout
                 }
-                {' • '}
-                {FormatRaceDate(
-                  SelectedRace.date_start
-                )}
-              </p>
-            </div>
-          ) : (
-            <div className="race-information">
-              <p className="dashboard-label">
-                RACE RESULTS
-              </p>
+                SelectedDriverPoint={
+                  SelectedDriverPoint
+                }
+                OnSelectDriverPoint={
+                  SelectDriverPoint
+                }
+              />
 
-              <h2>
-                Select a race
-              </h2>
-
-              <p>
-                Choose a race from the
-                list to view its
-                results.
-              </p>
-            </div>
+              <TeamPointsChart
+                RaceResults={
+                  RaceResults
+                }
+                IsCompactLayout={
+                  IsCompactLayout
+                }
+                HoveredTeamIndex={
+                  HoveredTeamIndex
+                }
+                SetHoveredTeamIndex={
+                  setHoveredTeamIndex
+                }
+                SelectedTeamIndex={
+                  SelectedTeamIndex
+                }
+                OnSelectTeam={
+                  SelectTeam
+                }
+              />
+            </>
           )}
 
-          {SelectedRace &&
-            !IsResultsLoading &&
-            !ResultsErrorMessage &&
-            RaceResults.length >
-              0 && (
-              <>
-                <div className="summary-grid">
-                  <div className="summary-card">
-                    <span className="summary-label">
-                      WINNER
-                    </span>
-
-                    <strong>
-                      {Winner
-                        ? Winner.full_name
-                        : 'Unavailable'}
-                    </strong>
-                  </div>
-
-                  <div className="summary-card">
-                    <span className="summary-label">
-                      WINNING TEAM
-                    </span>
-
-                    <strong>
-                      {Winner
-                        ? Winner.team_name
-                        : 'Unavailable'}
-                    </strong>
-                  </div>
-
-                  <div className="summary-card">
-                    <span className="summary-label">
-                      CLASSIFIED DRIVERS
-                    </span>
-
-                    <strong>
-                      {
-                        ClassifiedDrivers
-                      }
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="chart-card">
-                  <div className="section-heading">
-                    <div>
-                      <p className="dashboard-label">
-                        RACE ANALYTICS
-                      </p>
-
-                      <h3>
-                        Driver Points
-                      </h3>
-                    </div>
-
-                    <span>
-                      Top point scorers
-                    </span>
-                  </div>
-
-                  {PointsChartData.length >
-                  0 ? (
-                    <>
-                      <div
-                        className={
-                          IsCompactLayout
-                            ? 'chart-container mobile-driver-chart'
-                            : 'chart-container'
-                        }
-                      >
-                        <ResponsiveContainer
-                          width="100%"
-                          height="100%"
-                        >
-                          {IsCompactLayout ? (
-                            <BarChart
-                              data={
-                                PointsChartData
-                              }
-                              layout="vertical"
-                              margin={{
-                                top: 5,
-                                right: 10,
-                                left: 0,
-                                bottom: 5,
-                              }}
-                            >
-                              <CartesianGrid
-                                stroke="#333333"
-                                strokeDasharray="3 3"
-                                horizontal={
-                                  false
-                                }
-                              />
-
-                              <XAxis
-                                type="number"
-                                stroke="#a8a8a8"
-                                allowDecimals={
-                                  false
-                                }
-                                tick={{
-                                  fill: '#a8a8a8',
-                                  fontSize: 10,
-                                }}
-                              />
-
-                              <YAxis
-                                type="category"
-                                dataKey="driver"
-                                width={48}
-                                stroke="#a8a8a8"
-                                tick={{
-                                  fill: '#a8a8a8',
-                                  fontSize: 10,
-                                }}
-                              />
-
-                              <Bar
-                                dataKey="points"
-                                name="Points"
-                                barSize={18}
-                                radius={[
-                                  0,
-                                  5,
-                                  5,
-                                  0,
-                                ]}
-                                onClick={(
-                                  _,
-                                  Index,
-                                  ...Arguments
-                                ) =>
-                                  SelectDriverChartPoint(
-                                    PointsChartData[
-                                      Index
-                                    ],
-                                    Arguments
-                                  )
-                                }
-                              >
-                                {PointsChartData.map(
-                                  (
-                                    DriverData
-                                  ) => (
-                                    <Cell
-                                      key={
-                                        DriverData.fullName
-                                      }
-                                      fill="#e10600"
-                                      opacity={
-                                        SelectedDriverPoint ===
-                                          null ||
-                                        SelectedDriverPoint.fullName ===
-                                          DriverData.fullName
-                                          ? 1
-                                          : 0.35
-                                      }
-                                      stroke={
-                                        SelectedDriverPoint?.fullName ===
-                                        DriverData.fullName
-                                          ? '#ffffff'
-                                          : 'none'
-                                      }
-                                      strokeWidth={
-                                        SelectedDriverPoint?.fullName ===
-                                        DriverData.fullName
-                                          ? 2
-                                          : 0
-                                      }
-                                      className="driver-bar"
-                                    />
-                                  )
-                                )}
-                              </Bar>
-                            </BarChart>
-                          ) : (
-                            <BarChart
-                              data={
-                                PointsChartData
-                              }
-                              margin={{
-                                top: 10,
-                                right: 10,
-                                left: 0,
-                                bottom: 5,
-                              }}
-                            >
-                              <CartesianGrid
-                                stroke="#333333"
-                                strokeDasharray="3 3"
-                                vertical={
-                                  false
-                                }
-                              />
-
-                              <XAxis
-                                dataKey="driver"
-                                stroke="#a8a8a8"
-                                interval={0}
-                                tick={{
-                                  fill: '#a8a8a8',
-                                  fontSize: 12,
-                                }}
-                              />
-
-                              <YAxis
-                                stroke="#a8a8a8"
-                                allowDecimals={
-                                  false
-                                }
-                              />
-
-                              <Tooltip
-                                cursor={{
-                                  fill: '#292929',
-                                }}
-                                content={
-                                  <DriverPointsTooltip />
-                                }
-                              />
-
-                              <Bar
-                                dataKey="points"
-                                name="Points"
-                                radius={[
-                                  5,
-                                  5,
-                                  0,
-                                  0,
-                                ]}
-                                onClick={(
-                                  _,
-                                  Index,
-                                  ...Arguments
-                                ) =>
-                                  SelectDriverChartPoint(
-                                    PointsChartData[
-                                      Index
-                                    ],
-                                    Arguments
-                                  )
-                                }
-                              >
-                                {PointsChartData.map(
-                                  (
-                                    DriverData
-                                  ) => (
-                                    <Cell
-                                      key={
-                                        DriverData.fullName
-                                      }
-                                      fill="#e10600"
-                                      opacity={
-                                        SelectedDriverPoint ===
-                                          null ||
-                                        SelectedDriverPoint.fullName ===
-                                          DriverData.fullName
-                                          ? 1
-                                          : 0.35
-                                      }
-                                      stroke={
-                                        SelectedDriverPoint?.fullName ===
-                                        DriverData.fullName
-                                          ? '#ffffff'
-                                          : 'none'
-                                      }
-                                      strokeWidth={
-                                        SelectedDriverPoint?.fullName ===
-                                        DriverData.fullName
-                                          ? 2
-                                          : 0
-                                      }
-                                      className="driver-bar"
-                                    />
-                                  )
-                                )}
-                              </Bar>
-                            </BarChart>
-                          )}
-                        </ResponsiveContainer>
-                      </div>
-
-                      <div className="touch-hint">
-                        Tap a driver to
-                        view their points.
-                      </div>
-
-                      {SelectedDriverPoint && (
-                        <div className="mobile-stat-card">
-                          <span className="mobile-stat-label">
-                            DRIVER
-                          </span>
-
-                          <strong>
-                            {
-                              SelectedDriverPoint.fullName
-                            }
-                          </strong>
-
-                          <span className="mobile-stat-value">
-                            {
-                              SelectedDriverPoint.points
-                            }{' '}
-                            points
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="chart-empty">
-                      Points data is
-                      unavailable for
-                      this race.
-                    </div>
-                  )}
-                </div>
-
-                <div className="chart-card team-analytics-card">
-                  <div className="section-heading">
-                    <div>
-                      <p className="dashboard-label">
-                        TEAM ANALYTICS
-                      </p>
-
-                      <h3>
-                        Top 5 Team Points
-                      </h3>
-                    </div>
-
-                    <span>
-                      Highest-scoring
-                      teams
-                    </span>
-                  </div>
-
-                  {TeamPointsData.length >
-                  0 ? (
-                    <div className="team-analytics-content">
-                      <div className="pie-popup-slot">
-                        {ActiveTeam ? (
-                          <div className="pie-hover-popup">
-                            <span className="pie-popup-label">
-                              TEAM
-                            </span>
-
-                            <div className="pie-popup-team">
-                              <span
-                                className="pie-popup-colour"
-                                style={{
-                                  backgroundColor:
-                                    ActiveTeam.colour,
-                                }}
-                              ></span>
-
-                              <strong>
-                                {
-                                  ActiveTeam.team
-                                }
-                              </strong>
-                            </div>
-
-                            <span className="pie-popup-points">
-                              {
-                                ActiveTeam.points
-                              }
-                            </span>
-
-                            <small>
-                              RACE POINTS
-                            </small>
-                          </div>
-                        ) : (
-                          <div className="pie-popup-placeholder">
-                            <span>
-                              Select a
-                              team
-                            </span>
-
-                            <small>
-                              Hover or tap
-                              to view
-                              points
-                            </small>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="pie-chart-main">
-                        <div className="pie-chart-container">
-                          <ResponsiveContainer
-                            width="100%"
-                            height="100%"
-                          >
-                            <PieChart>
-                              <Pie
-                                data={
-                                  TeamPointsData
-                                }
-                                dataKey="points"
-                                nameKey="team"
-                                cx="50%"
-                                cy="50%"
-                                innerRadius="57%"
-                                outerRadius="82%"
-                                paddingAngle={
-                                  0
-                                }
-                                isAnimationActive={
-                                  true
-                                }
-                              >
-                                {TeamPointsData.map(
-                                  (
-                                    Team,
-                                    Index
-                                  ) => (
-                                    <Cell
-                                      key={
-                                        Team.team
-                                      }
-                                      fill={
-                                        Team.colour
-                                      }
-                                      opacity={
-                                        ActiveTeamIndex ===
-                                          null ||
-                                        ActiveTeamIndex ===
-                                          Index
-                                          ? 1
-                                          : 0.3
-                                      }
-                                      stroke={
-                                        ActiveTeamIndex ===
-                                        Index
-                                          ? '#ffffff'
-                                          : 'none'
-                                      }
-                                      strokeWidth={
-                                        ActiveTeamIndex ===
-                                        Index
-                                          ? 4
-                                          : 0
-                                      }
-                                    />
-                                  )
-                                )}
-                              </Pie>
-
-                              <Pie
-                                data={
-                                  TeamPointsData
-                                }
-                                dataKey="points"
-                                nameKey="team"
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={
-                                  IsCompactLayout
-                                    ? '37%'
-                                    : '43%'
-                                }
-                                outerRadius={
-                                  IsCompactLayout
-                                    ? '96%'
-                                    : '92%'
-                                }
-                                paddingAngle={
-                                  0
-                                }
-                                isAnimationActive={
-                                  false
-                                }
-                                onMouseEnter={
-                                  IsCompactLayout
-                                    ? undefined
-                                    : (
-                                        _,
-                                        Index
-                                      ) =>
-                                        setHoveredTeamIndex(
-                                          Index
-                                        )
-                                }
-                                onMouseLeave={
-                                  IsCompactLayout
-                                    ? undefined
-                                    : () =>
-                                        setHoveredTeamIndex(
-                                          null
-                                        )
-                                }
-                                onClick={(
-                                  _,
-                                  Index,
-                                  ...Arguments
-                                ) =>
-                                  SelectTeam(
-                                    Index,
-                                    Arguments
-                                  )
-                                }
-                              >
-                                {TeamPointsData.map(
-                                  (
-                                    Team
-                                  ) => (
-                                    <Cell
-                                      key={`hit-${Team.team}`}
-                                      fill="rgba(255,255,255,0.001)"
-                                      stroke="none"
-                                      className="pie-hit-slice"
-                                    />
-                                  )
-                                )}
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </div>
-
-                        <div className="pie-centre-label">
-                          {ActiveTeam ? (
-                            <>
-                              <strong>
-                                {
-                                  ActiveTeam.team
-                                }
-                              </strong>
-
-                              <span>
-                                {
-                                  ActiveTeam.points
-                                }{' '}
-                                pts
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <strong>
-                                TOP 5
-                              </strong>
-
-                              <span>
-                                TEAMS
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="team-ranking-list">
-                        {TeamPointsData.map(
-                          (
-                            Team,
-                            Index
-                          ) => (
-                            <div
-                              className={
-                                ActiveTeamIndex ===
-                                Index
-                                  ? 'team-ranking-row active'
-                                  : 'team-ranking-row'
-                              }
-                              key={
-                                Team.team
-                              }
-                              onMouseEnter={
-                                IsCompactLayout
-                                  ? undefined
-                                  : () =>
-                                      setHoveredTeamIndex(
-                                        Index
-                                      )
-                              }
-                              onMouseLeave={
-                                IsCompactLayout
-                                  ? undefined
-                                  : () =>
-                                      setHoveredTeamIndex(
-                                        null
-                                      )
-                              }
-                              onClick={(
-                                Event
-                              ) =>
-                                SelectTeam(
-                                  Index,
-                                  [
-                                    Event,
-                                  ]
-                                )
-                              }
-                            >
-                              <span className="team-rank-number">
-                                {Index +
-                                  1}
-                              </span>
-
-                              <span
-                                className="team-colour-dot"
-                                style={{
-                                  backgroundColor:
-                                    Team.colour,
-                                }}
-                              ></span>
-
-                              <span className="team-rank-name">
-                                {
-                                  Team.team
-                                }
-                              </span>
-
-                              <strong>
-                                {
-                                  Team.points
-                                }{' '}
-                                pts
-                              </strong>
-                            </div>
-                          )
-                        )}
-                      </div>
-
-                      <div className="touch-hint">
-                        Tap a team or
-                        donut section to
-                        view its points.
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="chart-empty">
-                      Team points data is
-                      unavailable.
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-          <div className="results-table">
-            <div className="results-header">
-              <span>POS</span>
-              <span>DRIVER</span>
-              <span>TEAM</span>
-              <span>POINTS</span>
-            </div>
-
-            {!SelectedRace && (
-              <div className="empty-results">
-                <div className="state-icon">
-                  🏁
-                </div>
-
-                <h3>
-                  No race selected
-                </h3>
-
-                <p>
-                  Select one of the races
-                  to view the final
-                  classification.
-                </p>
-              </div>
-            )}
-
-            {SelectedRace &&
-              IsResultsLoading && (
-                <div className="empty-results">
-                  <div className="loading-spinner large-spinner"></div>
-
-                  <h3>
-                    Loading results...
-                  </h3>
-
-                  <p>
-                    Retrieving race,
-                    driver and points
-                    data from OpenF1.
-                  </p>
-                </div>
-              )}
-
-            {SelectedRace &&
-              !IsResultsLoading &&
-              ResultsErrorMessage && (
-                <div className="empty-results error-state">
-                  <div className="state-icon">
-                    !
-                  </div>
-
-                  <h3>
-                    Unable to load
-                    results
-                  </h3>
-
-                  <p>
-                    {
-                      ResultsErrorMessage
-                    }
-                  </p>
-
-                  <button
-                    className="retry-button"
-                    onClick={
-                      RetryRaceResults
-                    }
-                  >
-                    Try Again
-                  </button>
-                </div>
-              )}
-
-            {SelectedRace &&
-              !IsResultsLoading &&
-              !ResultsErrorMessage &&
-              RaceResults.length ===
-                0 && (
-                <div className="empty-results">
-                  <div className="state-icon">
-                    —
-                  </div>
-
-                  <h3>
-                    No results
-                    available
-                  </h3>
-
-                  <p>
-                    OpenF1 did not return
-                    result data for this
-                    race.
-                  </p>
-                </div>
-              )}
-
-            {SelectedRace &&
-              !IsResultsLoading &&
-              !ResultsErrorMessage &&
-              RaceResults.length >
-                0 && (
-                <div className="results-body">
-                  {PointsWarningMessage && (
-                    <div className="points-warning">
-                      <strong>
-                        Points notice
-                      </strong>
-
-                      <span>
-                        {
-                          PointsWarningMessage
-                        }
-                      </span>
-                    </div>
-                  )}
-
-                  {RaceResults.map(
-                    (Result) => (
-                      <div
-                        className="result-row"
-                        key={
-                          Result.driver_number
-                        }
-                      >
-                        <span className="result-position">
-                          {
-                            GetPositionDisplay(
-                              Result
-                            )
-                          }
-                        </span>
-
-                        <span className="result-driver">
-                          {
-                            Result.full_name
-                          }
-                        </span>
-
-                        <span className="result-team">
-                          {
-                            Result.team_name
-                          }
-                        </span>
-
-                        <span className="result-points">
-                          {
-                            GetPointsDisplay(
-                              Result
-                            )
-                          }
-                        </span>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
-          </div>
+          <ResultsTable
+            SelectedRace={
+              SelectedRace
+            }
+            RaceResults={
+              RaceResults
+            }
+            IsResultsLoading={
+              IsResultsLoading
+            }
+            ResultsErrorMessage={
+              ResultsErrorMessage
+            }
+            PointsWarningMessage={
+              PointsWarningMessage
+            }
+            RetryRaceResults={
+              RetryRaceResults
+            }
+          />
         </section>
       </main>
     </div>
