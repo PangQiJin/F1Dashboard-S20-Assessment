@@ -3,6 +3,9 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -16,15 +19,53 @@ import {
 } from './Api/OpenF1Api'
 import './App.css'
 
+function DriverPointsTooltip({
+  active,
+  payload,
+}) {
+  if (
+    !active ||
+    !payload ||
+    payload.length === 0
+  ) {
+    return null
+  }
+
+  const DriverData = payload[0].payload
+
+  return (
+    <div className="driver-tooltip">
+      <strong>
+        {DriverData.fullName}
+      </strong>
+
+      <span>
+        Points: {DriverData.points}
+      </span>
+    </div>
+  )
+}
+
 function App() {
   const [Season, setSeason] = useState(2025)
 
   const [Races, setRaces] = useState([])
-  const [SelectedRace, setSelectedRace] = useState(null)
-  const [RaceResults, setRaceResults] = useState([])
+  const [SelectedRace, setSelectedRace] =
+    useState(null)
 
-  const [IsLoading, setIsLoading] = useState(true)
-  const [ErrorMessage, setErrorMessage] = useState('')
+  const [RaceResults, setRaceResults] =
+    useState([])
+
+  const [
+    HoveredTeamIndex,
+    setHoveredTeamIndex,
+  ] = useState(null)
+
+  const [IsLoading, setIsLoading] =
+    useState(true)
+
+  const [ErrorMessage, setErrorMessage] =
+    useState('')
 
   const [
     IsResultsLoading,
@@ -52,7 +93,8 @@ function App() {
   ] = useState(0)
 
   useEffect(() => {
-    const Controller = new AbortController()
+    const Controller =
+      new AbortController()
 
     async function LoadRaces() {
       try {
@@ -98,7 +140,8 @@ function App() {
       return
     }
 
-    const Controller = new AbortController()
+    const Controller =
+      new AbortController()
 
     async function LoadRaceResults() {
       try {
@@ -174,8 +217,12 @@ function App() {
                 )
 
               if (
-                !Number.isNaN(PointsStart) &&
-                !Number.isNaN(PointsCurrent)
+                !Number.isNaN(
+                  PointsStart
+                ) &&
+                !Number.isNaN(
+                  PointsCurrent
+                )
               ) {
                 RacePoints = Number(
                   (
@@ -254,6 +301,8 @@ function App() {
     setSelectedRace(null)
     setRaceResults([])
 
+    setHoveredTeamIndex(null)
+
     setErrorMessage('')
     setResultsErrorMessage('')
     setPointsWarningMessage('')
@@ -275,6 +324,7 @@ function App() {
     }
 
     setRaceResults([])
+    setHoveredTeamIndex(null)
 
     setResultsErrorMessage('')
     setPointsWarningMessage('')
@@ -311,7 +361,9 @@ function App() {
     )
   }
 
-  function FormatRaceDate(DateValue) {
+  function FormatRaceDate(
+    DateValue
+  ) {
     if (!DateValue) {
       return 'Date unavailable'
     }
@@ -328,7 +380,9 @@ function App() {
     )
   }
 
-  function GetPositionDisplay(Result) {
+  function GetPositionDisplay(
+    Result
+  ) {
     if (
       Result.position !== null &&
       Result.position !== undefined
@@ -351,7 +405,9 @@ function App() {
     return '—'
   }
 
-  function GetPointsDisplay(Result) {
+  function GetPointsDisplay(
+    Result
+  ) {
     if (
       Result.points === null ||
       Result.points === undefined
@@ -362,7 +418,9 @@ function App() {
     return Result.points
   }
 
-  function GetShortDriverName(FullName) {
+  function GetShortDriverName(
+    FullName
+  ) {
     if (!FullName) {
       return 'Unknown'
     }
@@ -370,13 +428,20 @@ function App() {
     const NameParts =
       FullName.trim().split(' ')
 
-    if (NameParts.length === 1) {
-      return NameParts[0]
-    }
-
     return NameParts[
       NameParts.length - 1
     ]
+  }
+
+  function GetDriverChartLabel(
+    FullName
+  ) {
+    const Surname =
+      GetShortDriverName(FullName)
+
+    return Surname
+      .substring(0, 5)
+      .toUpperCase()
   }
 
   const Winner =
@@ -401,10 +466,16 @@ function App() {
           Result.points > 0
       )
       .map((Result) => ({
-        driver: GetShortDriverName(
-          Result.full_name
-        ),
-        points: Result.points,
+        driver:
+          GetDriverChartLabel(
+            Result.full_name
+          ),
+
+        fullName:
+          Result.full_name,
+
+        points:
+          Result.points,
       }))
       .sort(
         (ResultA, ResultB) =>
@@ -412,6 +483,69 @@ function App() {
           ResultA.points
       )
       .slice(0, 10)
+
+  const TeamPointsMap = {}
+
+  RaceResults.forEach((Result) => {
+    if (
+      Result.points === null ||
+      Result.points === undefined ||
+      Result.points <= 0 ||
+      Result.team_name ===
+        'Team unavailable'
+    ) {
+      return
+    }
+
+    if (!TeamPointsMap[Result.team_name]) {
+      TeamPointsMap[
+        Result.team_name
+      ] = {
+        team: Result.team_name,
+        points: 0,
+
+        colour:
+          Result.team_colour
+            ? `#${Result.team_colour}`
+            : null,
+      }
+    }
+
+    TeamPointsMap[
+      Result.team_name
+    ].points += Result.points
+  })
+
+  const FallbackColours = [
+    '#e10600',
+    '#ff8700',
+    '#00a19c',
+    '#6c98ff',
+    '#b6babd',
+  ]
+
+  const TeamPointsData =
+    Object.values(TeamPointsMap)
+      .sort(
+        (TeamA, TeamB) =>
+          TeamB.points -
+          TeamA.points
+      )
+      .slice(0, 5)
+      .map((Team, Index) => ({
+        ...Team,
+
+        colour:
+          Team.colour ??
+          FallbackColours[Index],
+      }))
+
+  const HoveredTeam =
+    HoveredTeamIndex !== null
+      ? TeamPointsData[
+          HoveredTeamIndex
+        ]
+      : null
 
   return (
     <div className="dashboard">
@@ -686,9 +820,9 @@ function App() {
                           }
                           margin={{
                             top: 10,
-                            right: 20,
+                            right: 10,
                             left: 0,
-                            bottom: 10,
+                            bottom: 5,
                           }}
                         >
                           <CartesianGrid
@@ -700,6 +834,7 @@ function App() {
                           <XAxis
                             dataKey="driver"
                             stroke="#a8a8a8"
+                            interval={0}
                             tick={{
                               fill: '#a8a8a8',
                               fontSize: 12,
@@ -708,10 +843,6 @@ function App() {
 
                           <YAxis
                             stroke="#a8a8a8"
-                            tick={{
-                              fill: '#a8a8a8',
-                              fontSize: 12,
-                            }}
                             allowDecimals={
                               false
                             }
@@ -721,16 +852,9 @@ function App() {
                             cursor={{
                               fill: '#292929',
                             }}
-                            contentStyle={{
-                              backgroundColor:
-                                '#202020',
-                              border:
-                                '1px solid #444444',
-                              borderRadius:
-                                '6px',
-                              color:
-                                '#ffffff',
-                            }}
+                            content={
+                              <DriverPointsTooltip />
+                            }
                           />
 
                           <Bar
@@ -752,6 +876,232 @@ function App() {
                       Points data is
                       unavailable for this
                       race.
+                    </div>
+                  )}
+                </div>
+
+                <div className="chart-card team-analytics-card">
+                  <div className="section-heading">
+                    <div>
+                      <p className="dashboard-label">
+                        TEAM ANALYTICS
+                      </p>
+
+                      <h3>
+                        Top 5 Team Points
+                      </h3>
+                    </div>
+
+                    <span>
+                      Highest-scoring teams
+                    </span>
+                  </div>
+
+                  {TeamPointsData.length >
+                  0 ? (
+                    <div className="team-analytics-content">
+                      <div className="pie-popup-slot">
+                        {HoveredTeam ? (
+                          <div className="pie-hover-popup">
+                            <span className="pie-popup-label">
+                              TEAM
+                            </span>
+
+                            <div className="pie-popup-team">
+                              <span
+                                className="pie-popup-colour"
+                                style={{
+                                  backgroundColor:
+                                    HoveredTeam.colour,
+                                }}
+                              ></span>
+
+                              <strong>
+                                {
+                                  HoveredTeam.team
+                                }
+                              </strong>
+                            </div>
+
+                            <span className="pie-popup-points">
+                              {
+                                HoveredTeam.points
+                              }
+                            </span>
+
+                            <small>
+                              RACE POINTS
+                            </small>
+                          </div>
+                        ) : (
+                          <div className="pie-popup-placeholder">
+                            <span>
+                              Hover a team
+                            </span>
+
+                            <small>
+                              View race points
+                            </small>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pie-chart-main">
+                        <div className="pie-chart-container">
+                          <ResponsiveContainer
+                            width="100%"
+                            height="100%"
+                          >
+                            <PieChart>
+                              <Pie
+                                data={
+                                  TeamPointsData
+                                }
+                                dataKey="points"
+                                nameKey="team"
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={82}
+                                outerRadius={120}
+                                paddingAngle={3}
+                                onMouseEnter={(
+                                  _,
+                                  Index
+                                ) =>
+                                  setHoveredTeamIndex(
+                                    Index
+                                  )
+                                }
+                                onMouseLeave={() =>
+                                  setHoveredTeamIndex(
+                                    null
+                                  )
+                                }
+                              >
+                                {TeamPointsData.map(
+                                  (
+                                    Team,
+                                    Index
+                                  ) => (
+                                    <Cell
+                                      key={
+                                        Team.team
+                                      }
+                                      fill={
+                                        Team.colour
+                                      }
+                                      opacity={
+                                        HoveredTeamIndex ===
+                                          null ||
+                                        HoveredTeamIndex ===
+                                          Index
+                                          ? 1
+                                          : 0.25
+                                      }
+                                      stroke={
+                                        HoveredTeamIndex ===
+                                        Index
+                                          ? '#ffffff'
+                                          : '#202020'
+                                      }
+                                      strokeWidth={
+                                        HoveredTeamIndex ===
+                                        Index
+                                          ? 4
+                                          : 2
+                                      }
+                                      className="pie-slice"
+                                    />
+                                  )
+                                )}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        <div className="pie-centre-label">
+                          {HoveredTeam ? (
+                            <>
+                              <strong>
+                                {
+                                  HoveredTeam.team
+                                }
+                              </strong>
+
+                              <span>
+                                {
+                                  HoveredTeam.points
+                                }{' '}
+                                pts
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <strong>
+                                TOP 5
+                              </strong>
+
+                              <span>
+                                TEAMS
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="team-ranking-list">
+                        {TeamPointsData.map(
+                          (Team, Index) => (
+                            <div
+                              className={
+                                HoveredTeamIndex ===
+                                Index
+                                  ? 'team-ranking-row active'
+                                  : 'team-ranking-row'
+                              }
+                              key={Team.team}
+                              onMouseEnter={() =>
+                                setHoveredTeamIndex(
+                                  Index
+                                )
+                              }
+                              onMouseLeave={() =>
+                                setHoveredTeamIndex(
+                                  null
+                                )
+                              }
+                            >
+                              <span className="team-rank-number">
+                                {Index + 1}
+                              </span>
+
+                              <span
+                                className="team-colour-dot"
+                                style={{
+                                  backgroundColor:
+                                    Team.colour,
+                                }}
+                              ></span>
+
+                              <span className="team-rank-name">
+                                {Team.team}
+                              </span>
+
+                              <strong>
+                                {
+                                  Team.points
+                                }{' '}
+                                pts
+                              </strong>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="chart-empty">
+                      Team points data is
+                      unavailable.
                     </div>
                   )}
                 </div>
