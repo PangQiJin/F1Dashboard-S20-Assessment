@@ -1,4 +1,6 @@
 #root {
+  width: 100%;
+  min-width: 0;
   min-height: 100vh;
 }
 
@@ -8,7 +10,9 @@
 
 .dashboard {
   width: 100%;
+  min-width: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   background-color: #121212;
   color: #f1f1f1;
 }
@@ -18,6 +22,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 30px;
+  width: 100%;
   padding: 28px 40px;
   background-color: #151515;
   color: white;
@@ -25,11 +30,12 @@
 }
 
 .dashboard-header h1 {
-  margin-top: 4px;
+  margin: 4px 0 0;
   font-size: 32px;
 }
 
 .dashboard-label {
+  margin: 0;
   color: #e10600;
   font-size: 12px;
   font-weight: bold;
@@ -49,7 +55,7 @@
 
 .season-selector select {
   padding: 10px 34px 10px 12px;
-  border: 1px solid #444;
+  border: 1px solid #444444;
   border-radius: 6px;
   background-color: #242424;
   color: white;
@@ -63,7 +69,10 @@
 
 .dashboard-content {
   display: grid;
-  grid-template-columns: 330px minmax(0, 1fr);
+  grid-template-columns:
+    330px minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
   min-height: calc(100vh - 100px);
 }
 
@@ -84,20 +93,24 @@
 }
 
 .panel-heading p {
+  margin: 0;
   font-size: 14px;
   font-weight: bold;
   letter-spacing: 1px;
 }
 
 .panel-heading span {
-  color: #999;
+  color: #999999;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .race-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
+  min-width: 0;
 }
 
 .race-card {
@@ -106,6 +119,7 @@
   align-items: flex-start;
   gap: 5px;
   width: 100%;
+  min-width: 0;
   padding: 16px;
   border: 1px solid #363636;
   border-radius: 8px;
@@ -136,7 +150,7 @@
 }
 
 .race-card > span:last-child {
-  color: #aaa;
+  color: #aaaaaa;
   font-size: 13px;
 }
 
@@ -153,7 +167,7 @@
   align-items: center;
   gap: 10px;
   padding: 40px 15px;
-  color: #999;
+  color: #999999;
   text-align: center;
 }
 
@@ -167,6 +181,7 @@
 }
 
 .results-panel {
+  width: 100%;
   min-width: 0;
   padding: 36px;
   background-color: #121212;
@@ -183,12 +198,14 @@
 }
 
 .race-information > p:last-child {
+  margin-bottom: 0;
   color: #a8a8a8;
 }
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -219,6 +236,7 @@
 }
 
 .chart-card {
+  width: 100%;
   min-width: 0;
   margin-bottom: 20px;
   padding: 22px;
@@ -236,7 +254,7 @@
 }
 
 .section-heading h3 {
-  margin-top: 5px;
+  margin: 5px 0 0;
   font-size: 21px;
 }
 
@@ -246,14 +264,9 @@
   text-align: right;
 }
 
-.chart-scroll-area {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
 .chart-container {
   width: 100%;
+  min-width: 0;
   height: 300px;
 }
 
@@ -274,6 +287,25 @@
   color: #e10600;
 }
 
+.driver-bar {
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    stroke-width 0.2s ease;
+}
+
+.touch-hint {
+  display: none;
+  margin-top: 10px;
+  color: #777777;
+  font-size: 11px;
+  text-align: center;
+}
+
+.mobile-stat-card {
+  display: none;
+}
+
 .team-analytics-content {
   display: grid;
   grid-template-columns:
@@ -282,6 +314,8 @@
     minmax(270px, 0.9fr);
   gap: 32px;
   align-items: center;
+  width: 100%;
+  min-width: 0;
 }
 
 .pie-popup-slot {
@@ -301,7 +335,9 @@
   border: 1px solid #454545;
   border-radius: 10px;
   background-color: #181818;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 10px 28px
+    rgba(0, 0, 0, 0.35);
 }
 
 .pie-popup-label {
@@ -379,6 +415,7 @@
   position: relative;
   justify-self: center;
   width: 100%;
+  min-width: 0;
   max-width: 460px;
 }
 
@@ -417,17 +454,17 @@
   font-size: 13px;
 }
 
-.pie-slice {
+.pie-hit-slice {
   cursor: pointer;
-  transition:
-    opacity 0.2s ease,
-    stroke-width 0.2s ease;
+  pointer-events: all;
+  touch-action: manipulation;
 }
 
 .team-ranking-list {
   display: flex;
   flex-direction: column;
   gap: 9px;
+  width: 100%;
   min-width: 0;
 }
 
@@ -440,11 +477,14 @@
     auto;
   gap: 10px;
   align-items: center;
+  width: 100%;
   min-width: 0;
   padding: 14px;
   border: 1px solid #333333;
   border-radius: 8px;
   background-color: #252525;
+  cursor: pointer;
+  touch-action: manipulation;
   transition: 0.2s;
 }
 
@@ -492,8 +532,8 @@
 
 .results-table {
   width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  min-width: 0;
+  overflow: hidden;
   background-color: #202020;
   border: 1px solid #363636;
   border-radius: 10px;
@@ -501,8 +541,13 @@
 
 .results-header {
   display: grid;
-  grid-template-columns: 80px 2fr 2fr 100px;
-  min-width: 650px;
+  grid-template-columns:
+    80px
+    2fr
+    2fr
+    100px;
+  width: 100%;
+  min-width: 0;
   padding: 15px 20px;
   background-color: #292929;
   color: #aaaaaa;
@@ -514,7 +559,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 100%;
+  width: 100%;
   padding: 80px 20px;
   text-align: center;
 }
@@ -538,7 +583,7 @@
   justify-content: center;
   width: 54px;
   height: 54px;
-  border: 1px solid #444;
+  border: 1px solid #444444;
   border-radius: 50%;
   background-color: #292929;
   color: #eeeeee;
@@ -593,14 +638,20 @@
 .results-body {
   display: flex;
   flex-direction: column;
-  min-width: 650px;
+  width: 100%;
+  min-width: 0;
 }
 
 .result-row {
   display: grid;
-  grid-template-columns: 80px 2fr 2fr 100px;
+  grid-template-columns:
+    80px
+    2fr
+    2fr
+    100px;
   align-items: center;
-  min-width: 650px;
+  width: 100%;
+  min-width: 0;
   padding: 16px 20px;
   border-top: 1px solid #303030;
 }
@@ -614,12 +665,14 @@
 }
 
 .result-row span {
+  min-width: 0;
   color: #d8d8d8;
   font-size: 14px;
+  overflow-wrap: break-word;
 }
 
-.result-row span:first-child {
-  color: #ffffff;
+.result-position {
+  color: #ffffff !important;
   font-weight: bold;
 }
 
@@ -627,7 +680,7 @@
   display: flex;
   gap: 10px;
   align-items: center;
-  min-width: 650px;
+  width: 100%;
   padding: 13px 20px;
   background-color: #302815;
   border-bottom: 1px solid #564722;
@@ -639,7 +692,7 @@
   color: #f0d58a;
 }
 
-/* Tablet layout */
+/* TABLET */
 
 @media (max-width: 1100px) {
   .dashboard-content {
@@ -677,15 +730,17 @@
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns:
-      repeat(5, minmax(0, 1fr));
-    gap: 8px;
+      repeat(
+        5,
+        minmax(0, 1fr)
+      );
   }
 
   .team-ranking-row {
     grid-template-columns:
       20px
       10px
-      1fr;
+      minmax(0, 1fr);
   }
 
   .team-ranking-row strong {
@@ -693,106 +748,295 @@
   }
 }
 
-/* Small tablet / large phone */
+/* MOBILE / SMALL TABLET */
 
 @media (max-width: 760px) {
   .dashboard-header {
-    align-items: flex-start;
-    padding: 22px;
+    padding: 20px 16px;
   }
 
   .dashboard-header h1 {
-    font-size: 28px;
-  }
-
-  .results-panel {
-    padding: 24px 18px;
+    font-size: 27px;
   }
 
   .race-panel {
-    padding: 22px 18px;
+    padding: 20px 16px;
+  }
+
+  .results-panel {
+    padding: 24px 16px;
+  }
+
+  /*
+    No sideways race carousel on mobile.
+    Users scroll vertically instead.
+  */
+
+  .race-list {
+    flex-direction: column;
+    gap: 8px;
+    max-height: 270px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 4px;
+    padding-bottom: 0;
+  }
+
+  .race-card {
+    flex: none;
+    width: 100%;
+    padding: 13px;
+  }
+
+  .race-card:hover:not(:disabled) {
+    transform: none;
   }
 
   .summary-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .summary-card {
     min-height: auto;
+    padding: 16px;
   }
 
   .section-heading {
-    align-items: flex-start;
     flex-direction: column;
-    gap: 8px;
+    align-items: flex-start;
+    gap: 5px;
+    margin-bottom: 14px;
   }
 
   .section-heading > span {
     text-align: left;
   }
 
-  .chart-scroll-area {
-    padding-bottom: 8px;
+  .chart-card {
+    padding: 18px 14px;
   }
 
-  .chart-container {
-    width: 700px;
-    height: 280px;
+  /*
+    Horizontal driver bars are much
+    easier to read and tap on phones.
+  */
+
+  .mobile-driver-chart {
+    height: 365px;
+  }
+
+  .touch-hint {
+    display: block;
+  }
+
+  .mobile-stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px solid #444444;
+    border-radius: 8px;
+    background-color: #181818;
+  }
+
+  .mobile-stat-label {
+    color: #777777;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1.4px;
+  }
+
+  .mobile-stat-card strong {
+    color: #ffffff;
+    font-size: 15px;
+  }
+
+  .mobile-stat-value {
+    color: #e10600;
+    font-size: 14px;
+    font-weight: bold;
   }
 
   .team-analytics-content {
-    grid-template-columns: 1fr;
-    gap: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
 
   .pie-chart-main {
     order: 1;
-    max-width: 430px;
+    width: 100%;
+    max-width: 350px;
+  }
+
+  .pie-chart-container {
+    height: 300px;
   }
 
   .pie-popup-slot {
     order: 2;
+    width: 100%;
     min-height: auto;
-  }
-
-  .team-ranking-list {
-    order: 3;
-    grid-column: auto;
-    grid-template-columns: 1fr;
   }
 
   .pie-hover-popup,
   .pie-popup-placeholder {
-    max-width: 430px;
+    max-width: none;
   }
 
-  .pie-chart-container {
-    height: 340px;
+  .pie-hover-popup {
+    padding: 16px;
+  }
+
+  .pie-popup-team {
+    margin-bottom: 10px;
+  }
+
+  .pie-popup-points {
+    font-size: 25px;
+  }
+
+  .team-ranking-list {
+    order: 3;
+    display: flex;
+    width: 100%;
   }
 
   .team-ranking-row {
+    display: grid;
     grid-template-columns:
-      28px
-      14px
+      24px
+      12px
       minmax(0, 1fr)
       auto;
+    width: 100%;
   }
 
   .team-ranking-row strong {
     grid-column: auto;
   }
+
+  .team-analytics-content
+    > .touch-hint {
+    order: 4;
+  }
+
+  /*
+    Mobile result table becomes
+    stacked result cards.
+    No horizontal scrolling.
+  */
+
+  .results-header {
+    display: none;
+  }
+
+  .results-table {
+    overflow: hidden;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+  }
+
+  .results-body {
+    gap: 8px;
+  }
+
+  .result-row {
+    grid-template-columns:
+      44px
+      minmax(0, 1fr)
+      auto;
+
+    grid-template-rows:
+      auto
+      auto;
+
+    grid-template-areas:
+      "position driver points"
+      "position team points";
+
+    gap: 3px 12px;
+    padding: 14px;
+    border: 1px solid #363636;
+    border-radius: 8px;
+    background-color: #202020;
+  }
+
+  .result-row:first-child {
+    border-top: 1px solid #363636;
+  }
+
+  .result-position {
+    grid-area: position;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 44px;
+
+    border-radius: 7px;
+    background-color: #292929;
+
+    font-size: 16px !important;
+  }
+
+  .result-driver {
+    grid-area: driver;
+    align-self: end;
+    color: #ffffff !important;
+    font-weight: bold;
+  }
+
+  .result-team {
+    grid-area: team;
+    align-self: start;
+    color: #888888 !important;
+    font-size: 12px !important;
+  }
+
+  .result-points {
+    grid-area: points;
+    align-self: center;
+    text-align: right;
+    color: #ffffff !important;
+    font-weight: bold;
+  }
+
+  .result-points::before {
+    content: "PTS";
+    display: block;
+    margin-bottom: 2px;
+    color: #777777;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+
+  .points-warning {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    border: 1px solid #564722;
+    border-radius: 8px;
+  }
 }
 
-/* Phone layout */
+/* SMALL PHONE */
 
 @media (max-width: 520px) {
   .dashboard-header {
     flex-direction: column;
-    gap: 18px;
+    align-items: stretch;
+    gap: 16px;
+    padding: 18px 14px;
   }
 
   .dashboard-header h1 {
-    font-size: 26px;
+    font-size: 25px;
   }
 
   .season-selector {
@@ -801,40 +1045,56 @@
   }
 
   .season-selector select {
-    min-width: 120px;
+    min-width: 110px;
   }
 
-  .race-card {
-    flex-basis: 205px;
-  }
-
-  .race-information h2 {
-    font-size: 25px;
-  }
-
-  .chart-card {
+  .race-panel {
     padding: 18px 14px;
   }
 
+  .results-panel {
+    padding: 20px 14px;
+  }
+
+  .race-information h2 {
+    font-size: 24px;
+  }
+
+  .race-information p {
+    line-height: 1.5;
+  }
+
+  .chart-card {
+    padding: 16px 12px;
+  }
+
+  .mobile-driver-chart {
+    height: 350px;
+  }
+
+  .pie-chart-main {
+    max-width: 310px;
+  }
+
   .pie-chart-container {
-    height: 300px;
+    height: 280px;
   }
 
   .pie-centre-label {
-    width: 125px;
+    width: 115px;
+    min-height: 70px;
   }
 
   .pie-centre-label strong {
-    max-width: 115px;
-    font-size: 14px;
+    max-width: 105px;
+    font-size: 13px;
+  }
+
+  .pie-centre-label span {
+    font-size: 11px;
   }
 
   .empty-results {
-    padding: 60px 18px;
-  }
-
-  .points-warning {
-    align-items: flex-start;
-    flex-direction: column;
+    padding: 55px 16px;
   }
 }

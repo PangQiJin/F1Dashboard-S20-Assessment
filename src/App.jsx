@@ -31,7 +31,8 @@ function DriverPointsTooltip({
     return null
   }
 
-  const DriverData = payload[0].payload
+  const DriverData =
+    payload[0].payload
 
   return (
     <div className="driver-tooltip">
@@ -47,25 +48,51 @@ function DriverPointsTooltip({
 }
 
 function App() {
-  const [Season, setSeason] = useState(2025)
+  const [Season, setSeason] =
+    useState(2025)
 
-  const [Races, setRaces] = useState([])
-  const [SelectedRace, setSelectedRace] =
-    useState(null)
-
-  const [RaceResults, setRaceResults] =
+  const [Races, setRaces] =
     useState([])
+
+  const [
+    SelectedRace,
+    setSelectedRace,
+  ] = useState(null)
+
+  const [
+    RaceResults,
+    setRaceResults,
+  ] = useState([])
 
   const [
     HoveredTeamIndex,
     setHoveredTeamIndex,
   ] = useState(null)
 
-  const [IsLoading, setIsLoading] =
-    useState(true)
+  const [
+    SelectedTeamIndex,
+    setSelectedTeamIndex,
+  ] = useState(null)
 
-  const [ErrorMessage, setErrorMessage] =
-    useState('')
+  const [
+    SelectedDriverPoint,
+    setSelectedDriverPoint,
+  ] = useState(null)
+
+  const [
+    IsCompactLayout,
+    setIsCompactLayout,
+  ] = useState(false)
+
+  const [
+    IsLoading,
+    setIsLoading,
+  ] = useState(true)
+
+  const [
+    ErrorMessage,
+    setErrorMessage,
+  ] = useState('')
 
   const [
     IsResultsLoading,
@@ -93,6 +120,33 @@ function App() {
   ] = useState(0)
 
   useEffect(() => {
+    const MediaQuery =
+      window.matchMedia(
+        '(max-width: 760px)'
+      )
+
+    function UpdateLayout() {
+      setIsCompactLayout(
+        MediaQuery.matches
+      )
+    }
+
+    UpdateLayout()
+
+    MediaQuery.addEventListener(
+      'change',
+      UpdateLayout
+    )
+
+    return () => {
+      MediaQuery.removeEventListener(
+        'change',
+        UpdateLayout
+      )
+    }
+  }, [])
+
+  useEffect(() => {
     const Controller =
       new AbortController()
 
@@ -104,13 +158,17 @@ function App() {
             Controller.signal
           )
 
-        if (Controller.signal.aborted) {
+        if (
+          Controller.signal.aborted
+        ) {
           return
         }
 
         setRaces(RaceData)
       } catch (Error) {
-        if (Controller.signal.aborted) {
+        if (
+          Controller.signal.aborted
+        ) {
           return
         }
 
@@ -122,7 +180,9 @@ function App() {
 
         setRaces([])
       } finally {
-        if (!Controller.signal.aborted) {
+        if (
+          !Controller.signal.aborted
+        ) {
           setIsLoading(false)
         }
       }
@@ -133,7 +193,10 @@ function App() {
     return () => {
       Controller.abort()
     }
-  }, [Season, RaceReloadKey])
+  }, [
+    Season,
+    RaceReloadKey,
+  ])
 
   useEffect(() => {
     if (!SelectedRace) {
@@ -160,7 +223,9 @@ function App() {
           ),
         ])
 
-        if (Controller.signal.aborted) {
+        if (
+          Controller.signal.aborted
+        ) {
           return
         }
 
@@ -173,7 +238,9 @@ function App() {
               Controller.signal
             )
         } catch (PointsError) {
-          if (Controller.signal.aborted) {
+          if (
+            Controller.signal.aborted
+          ) {
             return
           }
 
@@ -188,77 +255,87 @@ function App() {
         }
 
         const CombinedResults =
-          ResultData.map((Result) => {
-            const Driver =
-              DriverData.find(
-                (DriverItem) =>
-                  DriverItem.driver_number ===
-                  Result.driver_number
-              )
-
-            const Championship =
-              ChampionshipData.find(
-                (ChampionshipItem) =>
-                  ChampionshipItem.driver_number ===
-                  Result.driver_number
-              )
-
-            let RacePoints = null
-
-            if (Championship) {
-              const PointsStart =
-                Number(
-                  Championship.points_start
+          ResultData.map(
+            (Result) => {
+              const Driver =
+                DriverData.find(
+                  (DriverItem) =>
+                    DriverItem.driver_number ===
+                    Result.driver_number
                 )
 
-              const PointsCurrent =
-                Number(
-                  Championship.points_current
-                )
-
-              if (
-                !Number.isNaN(
-                  PointsStart
-                ) &&
-                !Number.isNaN(
-                  PointsCurrent
-                )
-              ) {
-                RacePoints = Number(
+              const Championship =
+                ChampionshipData.find(
                   (
-                    PointsCurrent -
-                    PointsStart
-                  ).toFixed(2)
+                    ChampionshipItem
+                  ) =>
+                    ChampionshipItem.driver_number ===
+                    Result.driver_number
                 )
+
+              let RacePoints = null
+
+              if (Championship) {
+                const PointsStart =
+                  Number(
+                    Championship.points_start
+                  )
+
+                const PointsCurrent =
+                  Number(
+                    Championship.points_current
+                  )
+
+                if (
+                  !Number.isNaN(
+                    PointsStart
+                  ) &&
+                  !Number.isNaN(
+                    PointsCurrent
+                  )
+                ) {
+                  RacePoints =
+                    Number(
+                      (
+                        PointsCurrent -
+                        PointsStart
+                      ).toFixed(2)
+                    )
+                }
+              }
+
+              return {
+                ...Result,
+
+                full_name:
+                  Driver?.full_name ??
+                  `Driver #${Result.driver_number}`,
+
+                team_name:
+                  Driver?.team_name ??
+                  'Team unavailable',
+
+                team_colour:
+                  Driver?.team_colour ??
+                  null,
+
+                points:
+                  RacePoints,
               }
             }
+          )
 
-            return {
-              ...Result,
-
-              full_name:
-                Driver?.full_name ??
-                `Driver #${Result.driver_number}`,
-
-              team_name:
-                Driver?.team_name ??
-                'Team unavailable',
-
-              team_colour:
-                Driver?.team_colour ??
-                null,
-
-              points: RacePoints,
-            }
-          })
-
-        if (!Controller.signal.aborted) {
+        if (
+          !Controller.signal.aborted
+        ) {
           setRaceResults(
             CombinedResults
           )
         }
       } catch (Error) {
-        if (Controller.signal.aborted) {
+        if (
+          Controller.signal.aborted
+        ) {
           return
         }
 
@@ -270,8 +347,12 @@ function App() {
 
         setRaceResults([])
       } finally {
-        if (!Controller.signal.aborted) {
-          setIsResultsLoading(false)
+        if (
+          !Controller.signal.aborted
+        ) {
+          setIsResultsLoading(
+            false
+          )
         }
       }
     }
@@ -286,7 +367,29 @@ function App() {
     ResultsReloadKey,
   ])
 
-  function ChangeSeason(NewSeason) {
+  function StopChartEvent(
+    EventArguments
+  ) {
+    const Event =
+      EventArguments.find(
+        (Argument) =>
+          typeof Argument
+            ?.stopPropagation ===
+          'function'
+      )
+
+    Event?.stopPropagation()
+  }
+
+  function ClearAnalyticsSelections() {
+    setHoveredTeamIndex(null)
+    setSelectedTeamIndex(null)
+    setSelectedDriverPoint(null)
+  }
+
+  function ChangeSeason(
+    NewSeason
+  ) {
     if (
       IsLoading ||
       IsResultsLoading ||
@@ -301,7 +404,7 @@ function App() {
     setSelectedRace(null)
     setRaceResults([])
 
-    setHoveredTeamIndex(null)
+    ClearAnalyticsSelections()
 
     setErrorMessage('')
     setResultsErrorMessage('')
@@ -324,7 +427,8 @@ function App() {
     }
 
     setRaceResults([])
-    setHoveredTeamIndex(null)
+
+    ClearAnalyticsSelections()
 
     setResultsErrorMessage('')
     setPointsWarningMessage('')
@@ -351,6 +455,9 @@ function App() {
     }
 
     setRaceResults([])
+
+    ClearAnalyticsSelections()
+
     setResultsErrorMessage('')
     setPointsWarningMessage('')
     setIsResultsLoading(true)
@@ -359,6 +466,36 @@ function App() {
       (CurrentKey) =>
         CurrentKey + 1
     )
+  }
+
+  function SelectDriverChartPoint(
+    DriverData,
+    EventArguments
+  ) {
+    StopChartEvent(
+      EventArguments
+    )
+
+    setSelectedDriverPoint(
+      DriverData
+    )
+
+    setSelectedTeamIndex(null)
+  }
+
+  function SelectTeam(
+    Index,
+    EventArguments
+  ) {
+    StopChartEvent(
+      EventArguments
+    )
+
+    setSelectedTeamIndex(
+      Index
+    )
+
+    setSelectedDriverPoint(null)
   }
 
   function FormatRaceDate(
@@ -426,7 +563,9 @@ function App() {
     }
 
     const NameParts =
-      FullName.trim().split(' ')
+      FullName
+        .trim()
+        .split(' ')
 
     return NameParts[
       NameParts.length - 1
@@ -437,7 +576,9 @@ function App() {
     FullName
   ) {
     const Surname =
-      GetShortDriverName(FullName)
+      GetShortDriverName(
+        FullName
+      )
 
     return Surname
       .substring(0, 5)
@@ -454,15 +595,18 @@ function App() {
     RaceResults.filter(
       (Result) =>
         Result.position !== null &&
-        Result.position !== undefined
+        Result.position !==
+          undefined
     ).length
 
   const PointsChartData =
     RaceResults
       .filter(
         (Result) =>
-          Result.points !== null &&
-          Result.points !== undefined &&
+          Result.points !==
+            null &&
+          Result.points !==
+            undefined &&
           Result.points > 0
       )
       .map((Result) => ({
@@ -478,7 +622,10 @@ function App() {
           Result.points,
       }))
       .sort(
-        (ResultA, ResultB) =>
+        (
+          ResultA,
+          ResultB
+        ) =>
           ResultB.points -
           ResultA.points
       )
@@ -486,35 +633,45 @@ function App() {
 
   const TeamPointsMap = {}
 
-  RaceResults.forEach((Result) => {
-    if (
-      Result.points === null ||
-      Result.points === undefined ||
-      Result.points <= 0 ||
-      Result.team_name ===
-        'Team unavailable'
-    ) {
-      return
-    }
+  RaceResults.forEach(
+    (Result) => {
+      if (
+        Result.points === null ||
+        Result.points ===
+          undefined ||
+        Result.points <= 0 ||
+        Result.team_name ===
+          'Team unavailable'
+      ) {
+        return
+      }
 
-    if (!TeamPointsMap[Result.team_name]) {
+      if (
+        !TeamPointsMap[
+          Result.team_name
+        ]
+      ) {
+        TeamPointsMap[
+          Result.team_name
+        ] = {
+          team:
+            Result.team_name,
+
+          points: 0,
+
+          colour:
+            Result.team_colour
+              ? `#${Result.team_colour}`
+              : null,
+        }
+      }
+
       TeamPointsMap[
         Result.team_name
-      ] = {
-        team: Result.team_name,
-        points: 0,
-
-        colour:
-          Result.team_colour
-            ? `#${Result.team_colour}`
-            : null,
-      }
+      ].points +=
+        Result.points
     }
-
-    TeamPointsMap[
-      Result.team_name
-    ].points += Result.points
-  })
+  )
 
   const FallbackColours = [
     '#e10600',
@@ -525,30 +682,52 @@ function App() {
   ]
 
   const TeamPointsData =
-    Object.values(TeamPointsMap)
+    Object.values(
+      TeamPointsMap
+    )
       .sort(
-        (TeamA, TeamB) =>
+        (
+          TeamA,
+          TeamB
+        ) =>
           TeamB.points -
           TeamA.points
       )
       .slice(0, 5)
-      .map((Team, Index) => ({
-        ...Team,
+      .map(
+        (
+          Team,
+          Index
+        ) => ({
+          ...Team,
 
-        colour:
-          Team.colour ??
-          FallbackColours[Index],
-      }))
+          colour:
+            Team.colour ??
+            FallbackColours[
+              Index
+            ],
+        })
+      )
 
-  const HoveredTeam =
+  const ActiveTeamIndex =
     HoveredTeamIndex !== null
+      ? HoveredTeamIndex
+      : SelectedTeamIndex
+
+  const ActiveTeam =
+    ActiveTeamIndex !== null
       ? TeamPointsData[
-          HoveredTeamIndex
+          ActiveTeamIndex
         ]
       : null
 
   return (
-    <div className="dashboard">
+    <div
+      className="dashboard"
+      onClick={
+        ClearAnalyticsSelections
+      }
+    >
       <header className="dashboard-header">
         <div>
           <p className="dashboard-label">
@@ -661,10 +840,14 @@ function App() {
             {!IsLoading &&
               !ErrorMessage &&
               Races.map(
-                (Race, Index) => (
+                (
+                  Race,
+                  Index
+                ) => (
                   <button
                     className={
-                      SelectedRace?.session_key ===
+                      SelectedRace
+                        ?.session_key ===
                       Race.session_key
                         ? 'race-card selected'
                         : 'race-card'
@@ -673,7 +856,9 @@ function App() {
                       Race.session_key
                     }
                     onClick={() =>
-                      SelectRace(Race)
+                      SelectRace(
+                        Race
+                      )
                     }
                     disabled={
                       IsResultsLoading
@@ -685,7 +870,9 @@ function App() {
                     </span>
 
                     <strong>
-                      {Race.location}{' '}
+                      {
+                        Race.location
+                      }{' '}
                       Grand Prix
                     </strong>
 
@@ -744,7 +931,8 @@ function App() {
 
               <p>
                 Choose a race from the
-                list to view its results.
+                list to view its
+                results.
               </p>
             </div>
           )}
@@ -752,7 +940,8 @@ function App() {
           {SelectedRace &&
             !IsResultsLoading &&
             !ResultsErrorMessage &&
-            RaceResults.length > 0 && (
+            RaceResults.length >
+              0 && (
               <>
                 <div className="summary-grid">
                   <div className="summary-card">
@@ -785,7 +974,9 @@ function App() {
                     </span>
 
                     <strong>
-                      {ClassifiedDrivers}
+                      {
+                        ClassifiedDrivers
+                      }
                     </strong>
                   </div>
                 </div>
@@ -809,75 +1000,258 @@ function App() {
 
                   {PointsChartData.length >
                   0 ? (
-                    <div className="chart-scroll-area">
-                      <div className="chart-container">
+                    <>
+                      <div
+                        className={
+                          IsCompactLayout
+                            ? 'chart-container mobile-driver-chart'
+                            : 'chart-container'
+                        }
+                      >
                         <ResponsiveContainer
                           width="100%"
                           height="100%"
                         >
-                          <BarChart
-                            data={
-                              PointsChartData
-                            }
-                            margin={{
-                              top: 10,
-                              right: 10,
-                              left: 0,
-                              bottom: 5,
-                            }}
-                          >
-                            <CartesianGrid
-                              stroke="#333333"
-                              strokeDasharray="3 3"
-                              vertical={false}
-                            />
-
-                            <XAxis
-                              dataKey="driver"
-                              stroke="#a8a8a8"
-                              interval={0}
-                              tick={{
-                                fill: '#a8a8a8',
-                                fontSize: 12,
-                              }}
-                            />
-
-                            <YAxis
-                              stroke="#a8a8a8"
-                              allowDecimals={
-                                false
+                          {IsCompactLayout ? (
+                            <BarChart
+                              data={
+                                PointsChartData
                               }
-                            />
-
-                            <Tooltip
-                              cursor={{
-                                fill: '#292929',
+                              layout="vertical"
+                              margin={{
+                                top: 5,
+                                right: 10,
+                                left: 0,
+                                bottom: 5,
                               }}
-                              content={
-                                <DriverPointsTooltip />
-                              }
-                            />
+                            >
+                              <CartesianGrid
+                                stroke="#333333"
+                                strokeDasharray="3 3"
+                                horizontal={
+                                  false
+                                }
+                              />
 
-                            <Bar
-                              dataKey="points"
-                              name="Points"
-                              fill="#e10600"
-                              radius={[
-                                5,
-                                5,
-                                0,
-                                0,
-                              ]}
-                            />
-                          </BarChart>
+                              <XAxis
+                                type="number"
+                                stroke="#a8a8a8"
+                                allowDecimals={
+                                  false
+                                }
+                                tick={{
+                                  fill: '#a8a8a8',
+                                  fontSize: 10,
+                                }}
+                              />
+
+                              <YAxis
+                                type="category"
+                                dataKey="driver"
+                                width={48}
+                                stroke="#a8a8a8"
+                                tick={{
+                                  fill: '#a8a8a8',
+                                  fontSize: 10,
+                                }}
+                              />
+
+                              <Bar
+                                dataKey="points"
+                                name="Points"
+                                barSize={18}
+                                radius={[
+                                  0,
+                                  5,
+                                  5,
+                                  0,
+                                ]}
+                                onClick={(
+                                  _,
+                                  Index,
+                                  ...Arguments
+                                ) =>
+                                  SelectDriverChartPoint(
+                                    PointsChartData[
+                                      Index
+                                    ],
+                                    Arguments
+                                  )
+                                }
+                              >
+                                {PointsChartData.map(
+                                  (
+                                    DriverData
+                                  ) => (
+                                    <Cell
+                                      key={
+                                        DriverData.fullName
+                                      }
+                                      fill="#e10600"
+                                      opacity={
+                                        SelectedDriverPoint ===
+                                          null ||
+                                        SelectedDriverPoint.fullName ===
+                                          DriverData.fullName
+                                          ? 1
+                                          : 0.35
+                                      }
+                                      stroke={
+                                        SelectedDriverPoint?.fullName ===
+                                        DriverData.fullName
+                                          ? '#ffffff'
+                                          : 'none'
+                                      }
+                                      strokeWidth={
+                                        SelectedDriverPoint?.fullName ===
+                                        DriverData.fullName
+                                          ? 2
+                                          : 0
+                                      }
+                                      className="driver-bar"
+                                    />
+                                  )
+                                )}
+                              </Bar>
+                            </BarChart>
+                          ) : (
+                            <BarChart
+                              data={
+                                PointsChartData
+                              }
+                              margin={{
+                                top: 10,
+                                right: 10,
+                                left: 0,
+                                bottom: 5,
+                              }}
+                            >
+                              <CartesianGrid
+                                stroke="#333333"
+                                strokeDasharray="3 3"
+                                vertical={
+                                  false
+                                }
+                              />
+
+                              <XAxis
+                                dataKey="driver"
+                                stroke="#a8a8a8"
+                                interval={0}
+                                tick={{
+                                  fill: '#a8a8a8',
+                                  fontSize: 12,
+                                }}
+                              />
+
+                              <YAxis
+                                stroke="#a8a8a8"
+                                allowDecimals={
+                                  false
+                                }
+                              />
+
+                              <Tooltip
+                                cursor={{
+                                  fill: '#292929',
+                                }}
+                                content={
+                                  <DriverPointsTooltip />
+                                }
+                              />
+
+                              <Bar
+                                dataKey="points"
+                                name="Points"
+                                radius={[
+                                  5,
+                                  5,
+                                  0,
+                                  0,
+                                ]}
+                                onClick={(
+                                  _,
+                                  Index,
+                                  ...Arguments
+                                ) =>
+                                  SelectDriverChartPoint(
+                                    PointsChartData[
+                                      Index
+                                    ],
+                                    Arguments
+                                  )
+                                }
+                              >
+                                {PointsChartData.map(
+                                  (
+                                    DriverData
+                                  ) => (
+                                    <Cell
+                                      key={
+                                        DriverData.fullName
+                                      }
+                                      fill="#e10600"
+                                      opacity={
+                                        SelectedDriverPoint ===
+                                          null ||
+                                        SelectedDriverPoint.fullName ===
+                                          DriverData.fullName
+                                          ? 1
+                                          : 0.35
+                                      }
+                                      stroke={
+                                        SelectedDriverPoint?.fullName ===
+                                        DriverData.fullName
+                                          ? '#ffffff'
+                                          : 'none'
+                                      }
+                                      strokeWidth={
+                                        SelectedDriverPoint?.fullName ===
+                                        DriverData.fullName
+                                          ? 2
+                                          : 0
+                                      }
+                                      className="driver-bar"
+                                    />
+                                  )
+                                )}
+                              </Bar>
+                            </BarChart>
+                          )}
                         </ResponsiveContainer>
                       </div>
-                    </div>
+
+                      <div className="touch-hint">
+                        Tap a driver to
+                        view their points.
+                      </div>
+
+                      {SelectedDriverPoint && (
+                        <div className="mobile-stat-card">
+                          <span className="mobile-stat-label">
+                            DRIVER
+                          </span>
+
+                          <strong>
+                            {
+                              SelectedDriverPoint.fullName
+                            }
+                          </strong>
+
+                          <span className="mobile-stat-value">
+                            {
+                              SelectedDriverPoint.points
+                            }{' '}
+                            points
+                          </span>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="chart-empty">
                       Points data is
-                      unavailable for this
-                      race.
+                      unavailable for
+                      this race.
                     </div>
                   )}
                 </div>
@@ -895,7 +1269,8 @@ function App() {
                     </div>
 
                     <span>
-                      Highest-scoring teams
+                      Highest-scoring
+                      teams
                     </span>
                   </div>
 
@@ -903,7 +1278,7 @@ function App() {
                   0 ? (
                     <div className="team-analytics-content">
                       <div className="pie-popup-slot">
-                        {HoveredTeam ? (
+                        {ActiveTeam ? (
                           <div className="pie-hover-popup">
                             <span className="pie-popup-label">
                               TEAM
@@ -914,20 +1289,20 @@ function App() {
                                 className="pie-popup-colour"
                                 style={{
                                   backgroundColor:
-                                    HoveredTeam.colour,
+                                    ActiveTeam.colour,
                                 }}
                               ></span>
 
                               <strong>
                                 {
-                                  HoveredTeam.team
+                                  ActiveTeam.team
                                 }
                               </strong>
                             </div>
 
                             <span className="pie-popup-points">
                               {
-                                HoveredTeam.points
+                                ActiveTeam.points
                               }
                             </span>
 
@@ -938,11 +1313,14 @@ function App() {
                         ) : (
                           <div className="pie-popup-placeholder">
                             <span>
-                              Hover a team
+                              Select a
+                              team
                             </span>
 
                             <small>
-                              View race points
+                              Hover or tap
+                              to view
+                              points
                             </small>
                           </div>
                         )}
@@ -963,21 +1341,13 @@ function App() {
                                 nameKey="team"
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={82}
-                                outerRadius={120}
-                                paddingAngle={0}
-                                onMouseEnter={(
-                                  _,
-                                  Index
-                                ) =>
-                                  setHoveredTeamIndex(
-                                    Index
-                                  )
+                                innerRadius="57%"
+                                outerRadius="82%"
+                                paddingAngle={
+                                  0
                                 }
-                                onMouseLeave={() =>
-                                  setHoveredTeamIndex(
-                                    null
-                                  )
+                                isAnimationActive={
+                                  true
                                 }
                               >
                                 {TeamPointsData.map(
@@ -993,26 +1363,93 @@ function App() {
                                         Team.colour
                                       }
                                       opacity={
-                                        HoveredTeamIndex ===
+                                        ActiveTeamIndex ===
                                           null ||
-                                        HoveredTeamIndex ===
+                                        ActiveTeamIndex ===
                                           Index
                                           ? 1
-                                          : 0.25
+                                          : 0.3
                                       }
                                       stroke={
-                                        HoveredTeamIndex ===
+                                        ActiveTeamIndex ===
                                         Index
                                           ? '#ffffff'
                                           : 'none'
                                       }
                                       strokeWidth={
-                                        HoveredTeamIndex ===
+                                        ActiveTeamIndex ===
                                         Index
                                           ? 4
                                           : 0
                                       }
-                                      className="pie-slice"
+                                    />
+                                  )
+                                )}
+                              </Pie>
+
+                              <Pie
+                                data={
+                                  TeamPointsData
+                                }
+                                dataKey="points"
+                                nameKey="team"
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={
+                                  IsCompactLayout
+                                    ? '37%'
+                                    : '43%'
+                                }
+                                outerRadius={
+                                  IsCompactLayout
+                                    ? '96%'
+                                    : '92%'
+                                }
+                                paddingAngle={
+                                  0
+                                }
+                                isAnimationActive={
+                                  false
+                                }
+                                onMouseEnter={
+                                  IsCompactLayout
+                                    ? undefined
+                                    : (
+                                        _,
+                                        Index
+                                      ) =>
+                                        setHoveredTeamIndex(
+                                          Index
+                                        )
+                                }
+                                onMouseLeave={
+                                  IsCompactLayout
+                                    ? undefined
+                                    : () =>
+                                        setHoveredTeamIndex(
+                                          null
+                                        )
+                                }
+                                onClick={(
+                                  _,
+                                  Index,
+                                  ...Arguments
+                                ) =>
+                                  SelectTeam(
+                                    Index,
+                                    Arguments
+                                  )
+                                }
+                              >
+                                {TeamPointsData.map(
+                                  (
+                                    Team
+                                  ) => (
+                                    <Cell
+                                      key={`hit-${Team.team}`}
+                                      fill="rgba(255,255,255,0.001)"
+                                      stroke="none"
+                                      className="pie-hit-slice"
                                     />
                                   )
                                 )}
@@ -1022,17 +1459,17 @@ function App() {
                         </div>
 
                         <div className="pie-centre-label">
-                          {HoveredTeam ? (
+                          {ActiveTeam ? (
                             <>
                               <strong>
                                 {
-                                  HoveredTeam.team
+                                  ActiveTeam.team
                                 }
                               </strong>
 
                               <span>
                                 {
-                                  HoveredTeam.points
+                                  ActiveTeam.points
                                 }{' '}
                                 pts
                               </span>
@@ -1053,28 +1490,50 @@ function App() {
 
                       <div className="team-ranking-list">
                         {TeamPointsData.map(
-                          (Team, Index) => (
+                          (
+                            Team,
+                            Index
+                          ) => (
                             <div
                               className={
-                                HoveredTeamIndex ===
+                                ActiveTeamIndex ===
                                 Index
                                   ? 'team-ranking-row active'
                                   : 'team-ranking-row'
                               }
-                              key={Team.team}
-                              onMouseEnter={() =>
-                                setHoveredTeamIndex(
-                                  Index
-                                )
+                              key={
+                                Team.team
                               }
-                              onMouseLeave={() =>
-                                setHoveredTeamIndex(
-                                  null
+                              onMouseEnter={
+                                IsCompactLayout
+                                  ? undefined
+                                  : () =>
+                                      setHoveredTeamIndex(
+                                        Index
+                                      )
+                              }
+                              onMouseLeave={
+                                IsCompactLayout
+                                  ? undefined
+                                  : () =>
+                                      setHoveredTeamIndex(
+                                        null
+                                      )
+                              }
+                              onClick={(
+                                Event
+                              ) =>
+                                SelectTeam(
+                                  Index,
+                                  [
+                                    Event,
+                                  ]
                                 )
                               }
                             >
                               <span className="team-rank-number">
-                                {Index + 1}
+                                {Index +
+                                  1}
                               </span>
 
                               <span
@@ -1086,7 +1545,9 @@ function App() {
                               ></span>
 
                               <span className="team-rank-name">
-                                {Team.team}
+                                {
+                                  Team.team
+                                }
                               </span>
 
                               <strong>
@@ -1098,6 +1559,12 @@ function App() {
                             </div>
                           )
                         )}
+                      </div>
+
+                      <div className="touch-hint">
+                        Tap a team or
+                        donut section to
+                        view its points.
                       </div>
                     </div>
                   ) : (
@@ -1130,8 +1597,8 @@ function App() {
 
                 <p>
                   Select one of the races
-                  on the left to view the
-                  final classification.
+                  to view the final
+                  classification.
                 </p>
               </div>
             )}
@@ -1234,7 +1701,7 @@ function App() {
                           Result.driver_number
                         }
                       >
-                        <span>
+                        <span className="result-position">
                           {
                             GetPositionDisplay(
                               Result
@@ -1242,19 +1709,19 @@ function App() {
                           }
                         </span>
 
-                        <span>
+                        <span className="result-driver">
                           {
                             Result.full_name
                           }
                         </span>
 
-                        <span>
+                        <span className="result-team">
                           {
                             Result.team_name
                           }
                         </span>
 
-                        <span>
+                        <span className="result-points">
                           {
                             GetPointsDisplay(
                               Result
