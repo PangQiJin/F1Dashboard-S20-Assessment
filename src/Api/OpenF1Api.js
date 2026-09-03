@@ -1,15 +1,58 @@
 const BaseUrl = 'https://api.openf1.org/v1'
 
-export async function GetRaceSessions(Year) {
-  const Response = await fetch(
-    `${BaseUrl}/sessions?year=${Year}&session_name=Race`
-  )
+function Wait(Milliseconds) {
+  return new Promise((Resolve) => {
+    setTimeout(Resolve, Milliseconds)
+  })
+}
 
-  if (!Response.ok) {
-    throw new Error('Unable to retrieve F1 races.')
+async function FetchOpenF1(Endpoint) {
+  const MaximumAttempts = 3
+
+  for (
+    let Attempt = 1;
+    Attempt <= MaximumAttempts;
+    Attempt++
+  ) {
+    try {
+      const Response = await fetch(
+        `${BaseUrl}${Endpoint}`
+      )
+
+      if (Response.ok) {
+        return await Response.json()
+      }
+
+      const ShouldRetry =
+        Response.status === 429 ||
+        Response.status >= 500
+
+      if (
+        !ShouldRetry ||
+        Attempt === MaximumAttempts
+      ) {
+        throw new Error(
+          `OpenF1 request failed with status ${Response.status}.`
+        )
+      }
+    } catch (Error) {
+      if (Attempt === MaximumAttempts) {
+        throw Error
+      }
+    }
+
+    const RetryDelay = Attempt * 1000
+
+    await Wait(RetryDelay)
   }
 
-  const Data = await Response.json()
+  throw new Error('Unable to retrieve OpenF1 data.')
+}
+
+export async function GetRaceSessions(Year) {
+  const Data = await FetchOpenF1(
+    `/sessions?year=${Year}&session_name=Race`
+  )
 
   const RaceSessions = Data
     .filter((Race) => !Race.is_cancelled)
@@ -23,15 +66,9 @@ export async function GetRaceSessions(Year) {
 }
 
 export async function GetRaceResults(SessionKey) {
-  const Response = await fetch(
-    `${BaseUrl}/session_result?session_key=${SessionKey}`
+  const Data = await FetchOpenF1(
+    `/session_result?session_key=${SessionKey}`
   )
-
-  if (!Response.ok) {
-    throw new Error('Unable to retrieve race results.')
-  }
-
-  const Data = await Response.json()
 
   const SortedResults = [...Data].sort(
     (ResultA, ResultB) => {
@@ -39,10 +76,12 @@ export async function GetRaceResults(SessionKey) {
       const PositionB = ResultB.position
 
       const HasPositionA =
-        PositionA !== null && PositionA !== undefined
+        PositionA !== null &&
+        PositionA !== undefined
 
       const HasPositionB =
-        PositionB !== null && PositionB !== undefined
+        PositionB !== null &&
+        PositionB !== undefined
 
       if (HasPositionA && HasPositionB) {
         return PositionA - PositionB
@@ -56,7 +95,10 @@ export async function GetRaceResults(SessionKey) {
         return 1
       }
 
-      return GetStatusOrder(ResultA) - GetStatusOrder(ResultB)
+      return (
+        GetStatusOrder(ResultA) -
+        GetStatusOrder(ResultB)
+      )
     }
   )
 
@@ -64,15 +106,19 @@ export async function GetRaceResults(SessionKey) {
 }
 
 export async function GetDrivers(SessionKey) {
-  const Response = await fetch(
-    `${BaseUrl}/drivers?session_key=${SessionKey}`
+  const Data = await FetchOpenF1(
+    `/drivers?session_key=${SessionKey}`
   )
 
-  if (!Response.ok) {
-    throw new Error('Unable to retrieve driver data.')
-  }
+  return Data
+}
 
-  const Data = await Response.json()
+export async function GetDriverChampionship(
+  SessionKey
+) {
+  const Data = await FetchOpenF1(
+    `/championship_drivers?session_key=${SessionKey}`
+  )
 
   return Data
 }

@@ -3,6 +3,7 @@ import {
   GetRaceSessions,
   GetRaceResults,
   GetDrivers,
+  GetDriverChampionship,
 } from './Api/OpenF1Api'
 import './App.css'
 
@@ -10,18 +11,31 @@ function App() {
   const [Season, setSeason] = useState(2025)
 
   const [Races, setRaces] = useState([])
-  const [SelectedRace, setSelectedRace] = useState(null)
-  const [RaceResults, setRaceResults] = useState([])
+  const [SelectedRace, setSelectedRace] =
+    useState(null)
 
-  const [IsLoading, setIsLoading] = useState(true)
-  const [ErrorMessage, setErrorMessage] = useState('')
+  const [RaceResults, setRaceResults] =
+    useState([])
 
-  const [IsResultsLoading, setIsResultsLoading] =
-    useState(false)
+  const [IsLoading, setIsLoading] =
+    useState(true)
+
+  const [ErrorMessage, setErrorMessage] =
+    useState('')
+
+  const [
+    IsResultsLoading,
+    setIsResultsLoading,
+  ] = useState(false)
 
   const [
     ResultsErrorMessage,
     setResultsErrorMessage,
+  ] = useState('')
+
+  const [
+    PointsWarningMessage,
+    setPointsWarningMessage,
   ] = useState('')
 
   useEffect(() => {
@@ -40,7 +54,7 @@ function App() {
 
         if (IsActive) {
           setErrorMessage(
-            'Unable to load F1 races.'
+            'Unable to load F1 races. Please try again.'
           )
 
           setRaces([])
@@ -79,6 +93,26 @@ function App() {
             ),
           ])
 
+        let ChampionshipData = []
+
+        try {
+          ChampionshipData =
+            await GetDriverChampionship(
+              SelectedRace.session_key
+            )
+        } catch (PointsError) {
+          console.error(
+            'Points request failed:',
+            PointsError
+          )
+
+          if (IsActive) {
+            setPointsWarningMessage(
+              'Points are temporarily unavailable.'
+            )
+          }
+        }
+
         const CombinedResults =
           ResultData.map((Result) => {
             const Driver = DriverData.find(
@@ -86,6 +120,37 @@ function App() {
                 DriverItem.driver_number ===
                 Result.driver_number
             )
+
+            const Championship =
+              ChampionshipData.find(
+                (ChampionshipItem) =>
+                  ChampionshipItem.driver_number ===
+                  Result.driver_number
+              )
+
+            let RacePoints = null
+
+            if (Championship) {
+              const PointsStart = Number(
+                Championship.points_start
+              )
+
+              const PointsCurrent = Number(
+                Championship.points_current
+              )
+
+              if (
+                !Number.isNaN(PointsStart) &&
+                !Number.isNaN(PointsCurrent)
+              ) {
+                RacePoints = Number(
+                  (
+                    PointsCurrent -
+                    PointsStart
+                  ).toFixed(2)
+                )
+              }
+            }
 
             return {
               ...Result,
@@ -100,6 +165,8 @@ function App() {
 
               team_colour:
                 Driver?.team_colour ?? null,
+
+              points: RacePoints,
             }
           })
 
@@ -111,7 +178,7 @@ function App() {
 
         if (IsActive) {
           setResultsErrorMessage(
-            'Unable to load race results.'
+            'Unable to load race results. Please try again.'
           )
 
           setRaceResults([])
@@ -139,6 +206,7 @@ function App() {
 
     setErrorMessage('')
     setResultsErrorMessage('')
+    setPointsWarningMessage('')
 
     setIsLoading(true)
     setIsResultsLoading(false)
@@ -146,7 +214,10 @@ function App() {
 
   function SelectRace(Race) {
     setRaceResults([])
+
     setResultsErrorMessage('')
+    setPointsWarningMessage('')
+
     setIsResultsLoading(true)
 
     setSelectedRace(Race)
@@ -187,6 +258,17 @@ function App() {
     }
 
     return '—'
+  }
+
+  function GetPointsDisplay(Result) {
+    if (
+      Result.points === null ||
+      Result.points === undefined
+    ) {
+      return '—'
+    }
+
+    return Result.points
   }
 
   return (
@@ -276,6 +358,9 @@ function App() {
                     }
                     onClick={() =>
                       SelectRace(Race)
+                    }
+                    disabled={
+                      IsResultsLoading
                     }
                   >
                     <span className="race-round">
@@ -415,6 +500,14 @@ function App() {
               RaceResults.length >
                 0 && (
                 <div className="results-body">
+                  {PointsWarningMessage && (
+                    <div className="points-warning">
+                      {
+                        PointsWarningMessage
+                      }
+                    </div>
+                  )}
+
                   {RaceResults.map(
                     (Result) => (
                       <div
@@ -443,7 +536,13 @@ function App() {
                           }
                         </span>
 
-                        <span>—</span>
+                        <span>
+                          {
+                            GetPointsDisplay(
+                              Result
+                            )
+                          }
+                        </span>
                       </div>
                     )
                   )}
