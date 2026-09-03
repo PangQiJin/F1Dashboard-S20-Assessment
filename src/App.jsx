@@ -809,67 +809,69 @@ function App() {
 
                   {PointsChartData.length >
                   0 ? (
-                    <div className="chart-container">
-                      <ResponsiveContainer
-                        width="100%"
-                        height="100%"
-                      >
-                        <BarChart
-                          data={
-                            PointsChartData
-                          }
-                          margin={{
-                            top: 10,
-                            right: 10,
-                            left: 0,
-                            bottom: 5,
-                          }}
+                    <div className="chart-scroll-area">
+                      <div className="chart-container">
+                        <ResponsiveContainer
+                          width="100%"
+                          height="100%"
                         >
-                          <CartesianGrid
-                            stroke="#333333"
-                            strokeDasharray="3 3"
-                            vertical={false}
-                          />
-
-                          <XAxis
-                            dataKey="driver"
-                            stroke="#a8a8a8"
-                            interval={0}
-                            tick={{
-                              fill: '#a8a8a8',
-                              fontSize: 12,
-                            }}
-                          />
-
-                          <YAxis
-                            stroke="#a8a8a8"
-                            allowDecimals={
-                              false
+                          <BarChart
+                            data={
+                              PointsChartData
                             }
-                          />
-
-                          <Tooltip
-                            cursor={{
-                              fill: '#292929',
+                            margin={{
+                              top: 10,
+                              right: 10,
+                              left: 0,
+                              bottom: 5,
                             }}
-                            content={
-                              <DriverPointsTooltip />
-                            }
-                          />
+                          >
+                            <CartesianGrid
+                              stroke="#333333"
+                              strokeDasharray="3 3"
+                              vertical={false}
+                            />
 
-                          <Bar
-                            dataKey="points"
-                            name="Points"
-                            fill="#e10600"
-                            radius={[
-                              5,
-                              5,
-                              0,
-                              0,
-                            ]}
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
+                            <XAxis
+                              dataKey="driver"
+                              stroke="#a8a8a8"
+                              interval={0}
+                              tick={{
+                                fill: '#a8a8a8',
+                                fontSize: 12,
+                              }}
+                            />
+
+                            <YAxis
+                              stroke="#a8a8a8"
+                              allowDecimals={
+                                false
+                              }
+                            />
+
+                            <Tooltip
+                              cursor={{
+                                fill: '#292929',
+                              }}
+                              content={
+                                <DriverPointsTooltip />
+                              }
+                            />
+
+                            <Bar
+                              dataKey="points"
+                              name="Points"
+                              fill="#e10600"
+                              radius={[
+                                5,
+                                5,
+                                0,
+                                0,
+                              ]}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   ) : (
                     <div className="chart-empty">
@@ -963,7 +965,7 @@ function App() {
                                 cy="50%"
                                 innerRadius={82}
                                 outerRadius={120}
-                                paddingAngle={3}
+                                paddingAngle={0}
                                 onMouseEnter={(
                                   _,
                                   Index
@@ -1002,13 +1004,13 @@ function App() {
                                         HoveredTeamIndex ===
                                         Index
                                           ? '#ffffff'
-                                          : '#202020'
+                                          : 'none'
                                       }
                                       strokeWidth={
                                         HoveredTeamIndex ===
                                         Index
                                           ? 4
-                                          : 2
+                                          : 0
                                       }
                                       className="pie-slice"
                                     />
