@@ -1,7 +1,13 @@
-import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+  ],
+
+  // GitHub Pages hosts this project under /F1Dashboard/.
+  // This ensures generated CSS, JavaScript and asset paths
+  // point to the correct location after deployment.
+  base: '/F1Dashboard/',
 })
