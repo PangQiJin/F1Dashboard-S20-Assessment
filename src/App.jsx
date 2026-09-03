@@ -20,6 +20,8 @@ import TeamPointsChart from './Components/TeamPointsChart'
 import './App.css'
 
 function App() {
+  // Application-level state remains in App so the separate
+  // components can share the same selected season and race data.
   const [
     Season,
     setSeason,
@@ -40,6 +42,8 @@ function App() {
     setRaceResults,
   ] = useState([])
 
+  // Team analytics use separate hover and selected states so
+  // desktop hover and mobile tap interactions can coexist.
   const [
     HoveredTeamIndex,
     setHoveredTeamIndex,
@@ -55,6 +59,7 @@ function App() {
     setSelectedDriverPoint,
   ] = useState(null)
 
+  // Charts use a different layout on smaller screens.
   const [
     IsCompactLayout,
     setIsCompactLayout,
@@ -85,6 +90,8 @@ function App() {
     setPointsWarningMessage,
   ] = useState('')
 
+  // Incrementing these keys re-runs the corresponding effect when
+  // the user selects "Try Again" after an API failure.
   const [
     RaceReloadKey,
     setRaceReloadKey,
@@ -95,6 +102,9 @@ function App() {
     setResultsReloadKey,
   ] = useState(0)
 
+  // Detect the mobile chart breakpoint in JavaScript because
+  // Recharts requires different chart structures for desktop
+  // vertical bars and mobile horizontal bars.
   useEffect(() => {
     const MediaQuery =
       window.matchMedia(
@@ -122,6 +132,8 @@ function App() {
     }
   }, [])
 
+  // Retrieve the race list whenever the selected season changes
+  // or the user retries a failed race-list request.
   useEffect(() => {
     const Controller =
       new AbortController()
@@ -134,6 +146,8 @@ function App() {
             Controller.signal
           )
 
+        // Ignore outdated responses if this request was cancelled
+        // because the season changed.
         if (
           Controller.signal.aborted
         ) {
@@ -172,6 +186,7 @@ function App() {
 
     LoadRaces()
 
+    // Abort the previous request when the effect runs again.
     return () => {
       Controller.abort()
     }
@@ -180,6 +195,7 @@ function App() {
     RaceReloadKey,
   ])
 
+  // Load all information needed for the selected race.
   useEffect(() => {
     if (!SelectedRace) {
       return
@@ -190,6 +206,8 @@ function App() {
 
     async function LoadRaceResults() {
       try {
+        // Result and driver requests are independent, so they can
+        // run simultaneously to reduce loading time.
         const [
           ResultData,
           DriverData,
@@ -233,11 +251,15 @@ function App() {
             PointsError
           )
 
+          // Championship points are treated as optional so a
+          // temporary failure does not hide the actual race results.
           setPointsWarningMessage(
             'Points are temporarily unavailable. Race results are still shown below.'
           )
         }
 
+        // Merge data from multiple OpenF1 endpoints into one object
+        // that the dashboard components can consume easily.
         const CombinedResults =
           ResultData.map(
             (Result) => {
@@ -272,6 +294,11 @@ function App() {
                     Championship.points_current
                   )
 
+                /*
+                  OpenF1 championship data supplies the driver's points
+                  before and after the race. Their difference represents
+                  the championship points earned in this race.
+                */
                 if (
                   !Number.isNaN(
                     PointsStart
@@ -347,6 +374,8 @@ function App() {
 
     LoadRaceResults()
 
+    // Prevent an older race request from overwriting the results
+    // of a newly selected race.
     return () => {
       Controller.abort()
     }
@@ -355,6 +384,8 @@ function App() {
     ResultsReloadKey,
   ])
 
+  // Clear persistent chart selections when the user taps/clicks
+  // somewhere outside the interactive analytics.
   function ClearAnalyticsSelections() {
     setHoveredTeamIndex(
       null
@@ -380,6 +411,7 @@ function App() {
       return
     }
 
+    // Reset race-specific state before loading the new season.
     setSeason(
       NewSeason
     )
@@ -407,6 +439,8 @@ function App() {
       return
     }
 
+    // Selecting the already active race would unnecessarily repeat
+    // the same API/data-loading process.
     if (
       SelectedRace
         ?.session_key ===
@@ -431,6 +465,8 @@ function App() {
     )
   }
 
+  // Retry race-list loading by changing a dependency of the
+  // corresponding useEffect.
   function RetryRaceList() {
     setRaces([])
 
@@ -446,6 +482,8 @@ function App() {
     )
   }
 
+  // Retry the selected race without requiring another race
+  // to be selected first.
   function RetryRaceResults() {
     if (!SelectedRace) {
       return
@@ -468,6 +506,8 @@ function App() {
     )
   }
 
+  // Selecting one analytics type clears the other so the UI has
+  // only one persistent mobile selection at a time.
   function SelectDriverPoint(
     DriverData
   ) {
@@ -496,6 +536,7 @@ function App() {
     )
   }
 
+  // Analytics should only appear once valid result data exists.
   const CanShowAnalytics =
     SelectedRace &&
     !IsResultsLoading &&

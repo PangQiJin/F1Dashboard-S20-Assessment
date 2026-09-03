@@ -2,18 +2,23 @@ import {
   FormatRaceDate,
 } from '../Utils/RaceUtils'
 
+// Displays the selected race information and high-level
+// summary statistics before the detailed analytics.
 function RaceSummary({
   SelectedRace,
   RaceResults,
   IsResultsLoading,
   ResultsErrorMessage,
 }) {
+  // The winning driver is the result with finishing position 1.
   const Winner =
     RaceResults.find(
       (Result) =>
         Result.position === 1
     ) ?? null
 
+  // Only drivers with a numeric finishing position are counted
+  // as classified drivers.
   const ClassifiedDrivers =
     RaceResults.filter(
       (Result) =>
@@ -63,6 +68,8 @@ function RaceSummary({
         </div>
       )}
 
+      {/* Summary cards appear only after valid race results
+          have successfully loaded. */}
       {SelectedRace &&
         !IsResultsLoading &&
         !ResultsErrorMessage &&

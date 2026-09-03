@@ -5,6 +5,8 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
+// Prevent chart interactions from reaching the dashboard-level
+// deselection handler.
 function StopChartEvent(
   EventArguments
 ) {
@@ -29,6 +31,7 @@ function TeamPointsChart({
 }) {
   const TeamPointsMap = {}
 
+  // Combine points from both drivers belonging to the same team.
   RaceResults.forEach(
     (Result) => {
       if (
@@ -55,6 +58,7 @@ function TeamPointsChart({
 
           points: 0,
 
+          // OpenF1 supplies official team colours where available.
           colour:
             Result.team_colour
               ? `#${Result.team_colour}`
@@ -69,6 +73,8 @@ function TeamPointsChart({
     }
   )
 
+  // Fallback colours ensure the visualization remains usable if
+  // OpenF1 does not provide a colour for a team.
   const FallbackColours = [
     '#e10600',
     '#ff8700',
@@ -77,6 +83,8 @@ function TeamPointsChart({
     '#b6babd',
   ]
 
+  // Only the five highest-scoring teams are displayed to keep
+  // the donut chart easy to interpret.
   const TeamPointsData =
     Object.values(
       TeamPointsMap
@@ -105,6 +113,9 @@ function TeamPointsChart({
         })
       )
 
+  // Desktop hover temporarily takes priority over a persistent
+  // selected team. On mobile, SelectedTeamIndex supplies the
+  // persistent tap interaction.
   const ActiveTeamIndex =
     HoveredTeamIndex !== null
       ? HoveredTeamIndex
@@ -148,6 +159,8 @@ function TeamPointsChart({
 
       {TeamPointsData.length > 0 ? (
         <div className="team-analytics-content">
+          {/* Separate information card prevents statistics from
+              overlapping the donut chart itself. */}
           <div className="pie-popup-slot">
             {ActiveTeam ? (
               <div className="pie-hover-popup">
@@ -198,6 +211,12 @@ function TeamPointsChart({
                 height="100%"
               >
                 <PieChart>
+                  {/*
+                    Visible donut chart.
+
+                    paddingAngle is zero so the team slices form one
+                    connected ring instead of separated segments.
+                  */}
                   <Pie
                     data={
                       TeamPointsData
@@ -250,6 +269,14 @@ function TeamPointsChart({
                     )}
                   </Pie>
 
+                  {/*
+                    Invisible interaction layer.
+
+                    This second pie is deliberately larger than the
+                    visible ring. It increases the mouse/touch hit area,
+                    making thin donut sections much easier to select on
+                    mobile without changing the chart's appearance.
+                  */}
                   <Pie
                     data={
                       TeamPointsData
@@ -317,6 +344,8 @@ function TeamPointsChart({
               </ResponsiveContainer>
             </div>
 
+            {/* Centre text changes according to the hovered or
+                selected team while remaining independent of the chart. */}
             <div className="pie-centre-label">
               {ActiveTeam ? (
                 <>
@@ -343,6 +372,8 @@ function TeamPointsChart({
             </div>
           </div>
 
+          {/* Ranking rows provide another accessible way to select
+              a team instead of requiring interaction with the donut. */}
           <div className="team-ranking-list">
             {TeamPointsData.map(
               (

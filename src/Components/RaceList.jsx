@@ -1,3 +1,7 @@
+// Displays the races available for the selected season.
+//
+// This component also owns the loading, error and empty states
+// associated with retrieving the race list.
 function RaceList({
   Races,
   SelectedRace,
@@ -24,6 +28,7 @@ function RaceList({
       </div>
 
       <div className="race-list">
+        {/* Loading state shown while OpenF1 race data is requested. */}
         {IsLoading && (
           <div className="sidebar-state">
             <div className="loading-spinner"></div>
@@ -34,6 +39,8 @@ function RaceList({
           </div>
         )}
 
+        {/* Error state provides a retry action instead of leaving
+            the race panel unusable after a failed request. */}
         {!IsLoading &&
           ErrorMessage && (
             <div className="sidebar-state error-state">
@@ -56,6 +63,7 @@ function RaceList({
             </div>
           )}
 
+        {/* Empty state handles seasons where OpenF1 returns no races. */}
         {!IsLoading &&
           !ErrorMessage &&
           Races.length === 0 && (
@@ -72,6 +80,8 @@ function RaceList({
             </div>
           )}
 
+        {/* Race buttons are disabled while another race is loading
+            so repeated clicks cannot start conflicting result requests. */}
         {!IsLoading &&
           !ErrorMessage &&
           Races.map(

@@ -3,6 +3,11 @@ import {
   GetPositionDisplay,
 } from '../Utils/RaceUtils'
 
+// Displays the final race classification and all states associated
+// with retrieving race-result data.
+//
+// CSS converts the desktop table into individual result cards on
+// smaller screens so mobile users do not need horizontal scrolling.
 function ResultsTable({
   SelectedRace,
   RaceResults,
@@ -31,6 +36,7 @@ function ResultsTable({
         </span>
       </div>
 
+      {/* Initial empty state before the user chooses a race. */}
       {!SelectedRace && (
         <div className="empty-results">
           <div className="state-icon">
@@ -49,6 +55,8 @@ function ResultsTable({
         </div>
       )}
 
+      {/* Loading state shown while result, driver and point data
+          are being combined. */}
       {SelectedRace &&
         IsResultsLoading && (
           <div className="empty-results">
@@ -66,6 +74,8 @@ function ResultsTable({
           </div>
         )}
 
+      {/* API error state allows the selected race to be retried
+          without requiring the entire application to reload. */}
       {SelectedRace &&
         !IsResultsLoading &&
         ResultsErrorMessage && (
@@ -95,6 +105,7 @@ function ResultsTable({
           </div>
         )}
 
+      {/* Valid request with no returned classification data. */}
       {SelectedRace &&
         !IsResultsLoading &&
         !ResultsErrorMessage &&
@@ -121,6 +132,8 @@ function ResultsTable({
         !ResultsErrorMessage &&
         RaceResults.length > 0 && (
           <div className="results-body">
+            {/* Championship point data is optional. Race results can
+                still be displayed if only the points request fails. */}
             {PointsWarningMessage && (
               <div className="points-warning">
                 <strong>

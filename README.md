@@ -1,16 +1,68 @@
-# React + Vite
+# F1 Race Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A responsive data-driven Formula 1 race results dashboard built using React, Vite and the OpenF1 API.
 
-Currently, two official plugins are available:
+The dashboard allows users to explore Formula 1 races across multiple seasons, select individual races and view detailed race results and analytics.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- View a list of Formula 1 races
+- Switch between available F1 seasons
+- Select a race to view its results
+- View driver finishing positions
+- View driver and team information
+- View race points earned by drivers
+- View race winner and winning team
+- View the number of classified drivers
+- Interactive driver points bar chart
+- Interactive Top 5 Team Points donut chart
+- Desktop hover interactions
+- Mobile tap interactions
+- Loading states
+- Error states with retry functionality
+- Empty states
+- Responsive desktop, tablet and mobile layouts
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Technologies Used
 
-## Expanding the ESLint configuration
+- React
+- JavaScript
+- JSX
+- CSS
+- Vite
+- Recharts
+- OpenF1 API
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## API
+
+Race data is retrieved from the OpenF1 API.
+
+OpenF1 provides Formula 1 data including race sessions, drivers, session results and championship information.
+
+API documentation:
+
+https://openf1.org/
+
+## Project Structure
+
+```text
+src/
+│
+├── Api/
+│   └── OpenF1Api.js
+│
+├── Components/
+│   ├── DashboardHeader.jsx
+│   ├── DriverPointsChart.jsx
+│   ├── RaceList.jsx
+│   ├── RaceSummary.jsx
+│   ├── ResultsTable.jsx
+│   └── TeamPointsChart.jsx
+│
+├── Utils/
+│   └── RaceUtils.js
+│
+├── App.jsx
+├── App.css
+├── index.css
+└── main.jsx

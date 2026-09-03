@@ -13,6 +13,8 @@ import {
   GetDriverChartLabel,
 } from '../Utils/RaceUtils'
 
+// Custom desktop tooltip keeps the complete driver name available
+// even though compact five-character labels are used on the axis.
 function DriverPointsTooltip({
   active,
   payload,
@@ -41,6 +43,8 @@ function DriverPointsTooltip({
   )
 }
 
+// Prevent chart taps from reaching the dashboard-level click
+// handler, which would otherwise immediately clear the selection.
 function StopChartEvent(
   EventArguments
 ) {
@@ -61,6 +65,9 @@ function DriverPointsChart({
   SelectedDriverPoint,
   OnSelectDriverPoint,
 }) {
+  // Only drivers who earned points are useful in this chart.
+  // Results are ranked from highest to lowest and limited to 10
+  // to prevent the chart from becoming visually overcrowded.
   const PointsChartData =
     RaceResults
       .filter(
@@ -143,6 +150,11 @@ function DriverPointsChart({
               height="100%"
             >
               {IsCompactLayout ? (
+                /*
+                  Mobile uses horizontal bars because driver names
+                  are easier to read and the larger bars provide
+                  better touch targets than narrow vertical columns.
+                */
                 <BarChart
                   data={
                     PointsChartData
@@ -241,6 +253,10 @@ function DriverPointsChart({
                   </Bar>
                 </BarChart>
               ) : (
+                /*
+                  Desktop keeps the traditional vertical bar chart
+                  and provides additional detail through hover.
+                */
                 <BarChart
                   data={
                     PointsChartData
@@ -348,6 +364,8 @@ function DriverPointsChart({
             points.
           </div>
 
+          {/* Touch devices keep selected statistics visible because
+              they do not have a persistent hover state. */}
           {SelectedDriverPoint && (
             <div className="mobile-stat-card">
               <span className="mobile-stat-label">

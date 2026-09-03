@@ -1,4 +1,7 @@
-export function FormatRaceDate(DateValue) {
+// Convert the OpenF1 date value into a readable race date.
+export function FormatRaceDate(
+  DateValue
+) {
   if (!DateValue) {
     return 'Date unavailable'
   }
@@ -15,6 +18,8 @@ export function FormatRaceDate(DateValue) {
   )
 }
 
+// Return either the driver's finishing position or the
+// appropriate race status when no numeric position exists.
 export function GetPositionDisplay(
   Result
 ) {
@@ -40,6 +45,8 @@ export function GetPositionDisplay(
   return '—'
 }
 
+// Keep unavailable point values visually consistent throughout
+// the dashboard.
 export function GetPointsDisplay(
   Result
 ) {
@@ -53,6 +60,7 @@ export function GetPointsDisplay(
   return Result.points
 }
 
+// Extract the driver's surname for compact chart labels.
 export function GetShortDriverName(
   FullName
 ) {
@@ -70,6 +78,9 @@ export function GetShortDriverName(
   ]
 }
 
+// Driver chart labels are limited to five characters so that
+// several drivers can fit without overlapping on smaller screens.
+// The complete name remains available through the chart interaction.
 export function GetDriverChartLabel(
   FullName
 ) {

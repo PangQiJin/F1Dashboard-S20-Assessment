@@ -1,3 +1,6 @@
+// Dashboard header containing the application title and
+// season selector. The selector is temporarily disabled while
+// data is loading to prevent conflicting API requests.
 function DashboardHeader({
   Season,
   IsLoading,
