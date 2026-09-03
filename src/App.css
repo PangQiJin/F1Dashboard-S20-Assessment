@@ -38,8 +38,8 @@
 }
 
 .season-selector label {
-  font-size: 14px;
   color: #d0d0d0;
+  font-size: 14px;
 }
 
 .season-selector select {
@@ -104,7 +104,7 @@
   transition: 0.2s;
 }
 
-.race-card:hover {
+.race-card:hover:not(:disabled) {
   background-color: #303030;
   transform: translateX(3px);
 }
@@ -112,6 +112,11 @@
 .race-card.selected {
   border-left: 4px solid #e10600;
   background-color: #303030;
+}
+
+.race-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .race-card strong {
@@ -130,6 +135,25 @@
   text-transform: uppercase;
 }
 
+.sidebar-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 15px;
+  color: #999;
+  text-align: center;
+}
+
+.sidebar-state strong {
+  color: #eeeeee;
+}
+
+.sidebar-state p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .results-panel {
   padding: 36px;
   background-color: #121212;
@@ -141,8 +165,8 @@
 
 .race-information h2 {
   margin: 6px 0;
-  font-size: 30px;
   color: #f5f5f5;
+  font-size: 30px;
 }
 
 .race-information > p:last-child {
@@ -167,18 +191,82 @@
 }
 
 .empty-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 80px 20px;
   text-align: center;
 }
 
 .empty-results h3 {
+  margin-top: 14px;
   margin-bottom: 8px;
-  font-size: 20px;
   color: #eeeeee;
+  font-size: 20px;
 }
 
 .empty-results p {
+  max-width: 430px;
   color: #888888;
+  line-height: 1.6;
+}
+
+.state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border: 1px solid #444;
+  border-radius: 50%;
+  background-color: #292929;
+  color: #eeeeee;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.loading-spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid #3b3b3b;
+  border-top-color: #e10600;
+  border-radius: 50%;
+  animation: Spin 0.8s linear infinite;
+}
+
+.large-spinner {
+  width: 44px;
+  height: 44px;
+  border-width: 4px;
+}
+
+@keyframes Spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-state .state-icon {
+  border-color: #6d2626;
+  background-color: #351c1c;
+  color: #ff6868;
+}
+
+.retry-button {
+  margin-top: 10px;
+  padding: 10px 18px;
+  border: 1px solid #e10600;
+  border-radius: 6px;
+  background-color: #e10600;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.retry-button:hover {
+  background-color: #b80500;
+  border-color: #b80500;
 }
 
 .results-body {
@@ -210,4 +298,19 @@
 .result-row span:first-child {
   color: #ffffff;
   font-weight: bold;
+}
+
+.points-warning {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 13px 20px;
+  background-color: #302815;
+  border-bottom: 1px solid #564722;
+  color: #e0c477;
+  font-size: 13px;
+}
+
+.points-warning strong {
+  color: #f0d58a;
 }

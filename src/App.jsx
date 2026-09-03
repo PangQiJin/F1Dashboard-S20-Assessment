@@ -38,29 +38,47 @@ function App() {
     setPointsWarningMessage,
   ] = useState('')
 
+  const [
+    RaceReloadKey,
+    setRaceReloadKey,
+  ] = useState(0)
+
+  const [
+    ResultsReloadKey,
+    setResultsReloadKey,
+  ] = useState(0)
+
   useEffect(() => {
-    let IsActive = true
+    const Controller =
+      new AbortController()
 
     async function LoadRaces() {
       try {
         const RaceData =
-          await GetRaceSessions(Season)
-
-        if (IsActive) {
-          setRaces(RaceData)
-        }
-      } catch (Error) {
-        console.error(Error)
-
-        if (IsActive) {
-          setErrorMessage(
-            'Unable to load F1 races. Please try again.'
+          await GetRaceSessions(
+            Season,
+            Controller.signal
           )
 
-          setRaces([])
+        if (Controller.signal.aborted) {
+          return
         }
+
+        setRaces(RaceData)
+      } catch (Error) {
+        if (Controller.signal.aborted) {
+          return
+        }
+
+        console.error(Error)
+
+        setErrorMessage(
+          'We could not retrieve the race list from OpenF1.'
+        )
+
+        setRaces([])
       } finally {
-        if (IsActive) {
+        if (!Controller.signal.aborted) {
           setIsLoading(false)
         }
       }
@@ -69,57 +87,70 @@ function App() {
     LoadRaces()
 
     return () => {
-      IsActive = false
+      Controller.abort()
     }
-  }, [Season])
+  }, [Season, RaceReloadKey])
 
   useEffect(() => {
     if (!SelectedRace) {
       return
     }
 
-    let IsActive = true
+    const Controller =
+      new AbortController()
 
     async function LoadRaceResults() {
       try {
-        const [ResultData, DriverData] =
-          await Promise.all([
-            GetRaceResults(
-              SelectedRace.session_key
-            ),
+        const [
+          ResultData,
+          DriverData,
+        ] = await Promise.all([
+          GetRaceResults(
+            SelectedRace.session_key,
+            Controller.signal
+          ),
 
-            GetDrivers(
-              SelectedRace.session_key
-            ),
-          ])
+          GetDrivers(
+            SelectedRace.session_key,
+            Controller.signal
+          ),
+        ])
+
+        if (Controller.signal.aborted) {
+          return
+        }
 
         let ChampionshipData = []
 
         try {
           ChampionshipData =
             await GetDriverChampionship(
-              SelectedRace.session_key
+              SelectedRace.session_key,
+              Controller.signal
             )
         } catch (PointsError) {
+          if (Controller.signal.aborted) {
+            return
+          }
+
           console.error(
             'Points request failed:',
             PointsError
           )
 
-          if (IsActive) {
-            setPointsWarningMessage(
-              'Points are temporarily unavailable.'
-            )
-          }
+          setPointsWarningMessage(
+            'Points are temporarily unavailable. Race results are still shown below.'
+          )
         }
 
         const CombinedResults =
           ResultData.map((Result) => {
-            const Driver = DriverData.find(
-              (DriverItem) =>
-                DriverItem.driver_number ===
-                Result.driver_number
-            )
+            const Driver =
+              DriverData.find(
+                (DriverItem) =>
+                  DriverItem.driver_number ===
+                  Result.driver_number
+              )
 
             const Championship =
               ChampionshipData.find(
@@ -131,17 +162,23 @@ function App() {
             let RacePoints = null
 
             if (Championship) {
-              const PointsStart = Number(
-                Championship.points_start
-              )
+              const PointsStart =
+                Number(
+                  Championship.points_start
+                )
 
-              const PointsCurrent = Number(
-                Championship.points_current
-              )
+              const PointsCurrent =
+                Number(
+                  Championship.points_current
+                )
 
               if (
-                !Number.isNaN(PointsStart) &&
-                !Number.isNaN(PointsCurrent)
+                !Number.isNaN(
+                  PointsStart
+                ) &&
+                !Number.isNaN(
+                  PointsCurrent
+                )
               ) {
                 RacePoints = Number(
                   (
@@ -164,27 +201,36 @@ function App() {
                 'Team unavailable',
 
               team_colour:
-                Driver?.team_colour ?? null,
+                Driver?.team_colour ??
+                null,
 
               points: RacePoints,
             }
           })
 
-        if (IsActive) {
-          setRaceResults(CombinedResults)
+        if (
+          !Controller.signal.aborted
+        ) {
+          setRaceResults(
+            CombinedResults
+          )
         }
       } catch (Error) {
+        if (Controller.signal.aborted) {
+          return
+        }
+
         console.error(Error)
 
-        if (IsActive) {
-          setResultsErrorMessage(
-            'Unable to load race results. Please try again.'
-          )
+        setResultsErrorMessage(
+          'We could not retrieve the results for this race.'
+        )
 
-          setRaceResults([])
-        }
+        setRaceResults([])
       } finally {
-        if (IsActive) {
+        if (
+          !Controller.signal.aborted
+        ) {
           setIsResultsLoading(false)
         }
       }
@@ -193,11 +239,22 @@ function App() {
     LoadRaceResults()
 
     return () => {
-      IsActive = false
+      Controller.abort()
     }
-  }, [SelectedRace])
+  }, [
+    SelectedRace,
+    ResultsReloadKey,
+  ])
 
   function ChangeSeason(NewSeason) {
+    if (
+      IsLoading ||
+      IsResultsLoading ||
+      NewSeason === Season
+    ) {
+      return
+    }
+
     setSeason(NewSeason)
 
     setRaces([])
@@ -213,6 +270,17 @@ function App() {
   }
 
   function SelectRace(Race) {
+    if (IsResultsLoading) {
+      return
+    }
+
+    if (
+      SelectedRace?.session_key ===
+      Race.session_key
+    ) {
+      return
+    }
+
     setRaceResults([])
 
     setResultsErrorMessage('')
@@ -223,21 +291,55 @@ function App() {
     setSelectedRace(Race)
   }
 
-  function FormatRaceDate(DateValue) {
+  function RetryRaceList() {
+    setRaces([])
+    setErrorMessage('')
+    setIsLoading(true)
+
+    setRaceReloadKey(
+      (CurrentKey) =>
+        CurrentKey + 1
+    )
+  }
+
+  function RetryRaceResults() {
+    if (!SelectedRace) {
+      return
+    }
+
+    setRaceResults([])
+    setResultsErrorMessage('')
+    setPointsWarningMessage('')
+    setIsResultsLoading(true)
+
+    setResultsReloadKey(
+      (CurrentKey) =>
+        CurrentKey + 1
+    )
+  }
+
+  function FormatRaceDate(
+    DateValue
+  ) {
     if (!DateValue) {
       return 'Date unavailable'
     }
 
     return new Date(
       DateValue
-    ).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
+    ).toLocaleDateString(
+      'en-GB',
+      {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }
+    )
   }
 
-  function GetPositionDisplay(Result) {
+  function GetPositionDisplay(
+    Result
+  ) {
     if (
       Result.position !== null &&
       Result.position !== undefined
@@ -260,7 +362,9 @@ function App() {
     return '—'
   }
 
-  function GetPointsDisplay(Result) {
+  function GetPointsDisplay(
+    Result
+  ) {
     if (
       Result.points === null ||
       Result.points === undefined
@@ -279,7 +383,9 @@ function App() {
             FORMULA 1
           </p>
 
-          <h1>Race Dashboard</h1>
+          <h1>
+            Race Dashboard
+          </h1>
         </div>
 
         <div className="season-selector">
@@ -290,9 +396,15 @@ function App() {
           <select
             id="season"
             value={Season}
+            disabled={
+              IsLoading ||
+              IsResultsLoading
+            }
             onChange={(Event) =>
               ChangeSeason(
-                Number(Event.target.value)
+                Number(
+                  Event.target.value
+                )
               )
             }
           >
@@ -319,27 +431,59 @@ function App() {
             <span>
               {IsLoading
                 ? 'Loading...'
-                : `${Races.length} races`}
+                : ErrorMessage
+                  ? 'Unavailable'
+                  : `${Races.length} races`}
             </span>
           </div>
 
           <div className="race-list">
             {IsLoading && (
-              <p>Loading races...</p>
+              <div className="sidebar-state">
+                <div className="loading-spinner"></div>
+
+                <p>
+                  Loading races...
+                </p>
+              </div>
             )}
 
             {!IsLoading &&
               ErrorMessage && (
-                <p>{ErrorMessage}</p>
+                <div className="sidebar-state error-state">
+                  <strong>
+                    Unable to load races
+                  </strong>
+
+                  <p>
+                    {ErrorMessage}
+                  </p>
+
+                  <button
+                    className="retry-button"
+                    onClick={
+                      RetryRaceList
+                    }
+                  >
+                    Try Again
+                  </button>
+                </div>
               )}
 
             {!IsLoading &&
               !ErrorMessage &&
               Races.length === 0 && (
-                <p>
-                  No races found for this
-                  season.
-                </p>
+                <div className="sidebar-state">
+                  <strong>
+                    No races found
+                  </strong>
+
+                  <p>
+                    There are no races
+                    available for this
+                    season.
+                  </p>
+                </div>
               )}
 
             {!IsLoading &&
@@ -364,7 +508,8 @@ function App() {
                     }
                   >
                     <span className="race-round">
-                      Round {Index + 1}
+                      Round{' '}
+                      {Index + 1}
                     </span>
 
                     <strong>
@@ -373,7 +518,9 @@ function App() {
                     </strong>
 
                     <span>
-                      {Race.country_name}
+                      {
+                        Race.country_name
+                      }
                       {' • '}
                       {
                         Race.circuit_short_name
@@ -393,7 +540,9 @@ function App() {
               </p>
 
               <h2>
-                {SelectedRace.location}{' '}
+                {
+                  SelectedRace.location
+                }{' '}
                 Grand Prix
               </h2>
 
@@ -417,7 +566,9 @@ function App() {
                 RACE RESULTS
               </p>
 
-              <h2>Select a race</h2>
+              <h2>
+                Select a race
+              </h2>
 
               <p>
                 Choose a race from the
@@ -436,13 +587,18 @@ function App() {
 
             {!SelectedRace && (
               <div className="empty-results">
+                <div className="state-icon">
+                  🏁
+                </div>
+
                 <h3>
                   No race selected
                 </h3>
 
                 <p>
                   Select one of the races
-                  on the left to continue.
+                  on the left to view the
+                  final classification.
                 </p>
               </div>
             )}
@@ -450,13 +606,16 @@ function App() {
             {SelectedRace &&
               IsResultsLoading && (
                 <div className="empty-results">
+                  <div className="loading-spinner large-spinner"></div>
+
                   <h3>
                     Loading results...
                   </h3>
 
                   <p>
-                    Retrieving race results
-                    from OpenF1.
+                    Retrieving race,
+                    driver and points
+                    data from OpenF1.
                   </p>
                 </div>
               )}
@@ -464,9 +623,14 @@ function App() {
             {SelectedRace &&
               !IsResultsLoading &&
               ResultsErrorMessage && (
-                <div className="empty-results">
+                <div className="empty-results error-state">
+                  <div className="state-icon">
+                    !
+                  </div>
+
                   <h3>
-                    Unable to load results
+                    Unable to load
+                    results
                   </h3>
 
                   <p>
@@ -474,6 +638,15 @@ function App() {
                       ResultsErrorMessage
                     }
                   </p>
+
+                  <button
+                    className="retry-button"
+                    onClick={
+                      RetryRaceResults
+                    }
+                  >
+                    Try Again
+                  </button>
                 </div>
               )}
 
@@ -483,13 +656,19 @@ function App() {
               RaceResults.length ===
                 0 && (
                 <div className="empty-results">
+                  <div className="state-icon">
+                    —
+                  </div>
+
                   <h3>
-                    No results available
+                    No results
+                    available
                   </h3>
 
                   <p>
-                    No result data was
-                    returned for this race.
+                    OpenF1 did not return
+                    result data for this
+                    race.
                   </p>
                 </div>
               )}
@@ -502,9 +681,15 @@ function App() {
                 <div className="results-body">
                   {PointsWarningMessage && (
                     <div className="points-warning">
-                      {
-                        PointsWarningMessage
-                      }
+                      <strong>
+                        Points notice
+                      </strong>
+
+                      <span>
+                        {
+                          PointsWarningMessage
+                        }
+                      </span>
                     </div>
                   )}
 

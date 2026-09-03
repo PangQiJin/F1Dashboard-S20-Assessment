@@ -1,23 +1,68 @@
 const BaseUrl = 'https://api.openf1.org/v1'
 
+const MaximumAttempts = 3
+const RequestTimeout = 5000
+
+const RaceSessionCache = new Map()
+const RaceResultCache = new Map()
+const DriverCache = new Map()
+const ChampionshipCache = new Map()
+
 function Wait(Milliseconds) {
   return new Promise((Resolve) => {
     setTimeout(Resolve, Milliseconds)
   })
 }
 
-async function FetchOpenF1(Endpoint) {
-  const MaximumAttempts = 3
+async function FetchOpenF1(
+  Endpoint,
+  ExternalSignal = null
+) {
+  let LastError = null
 
   for (
     let Attempt = 1;
     Attempt <= MaximumAttempts;
     Attempt++
   ) {
+    const Controller = new AbortController()
+
+    function CancelRequest() {
+      Controller.abort()
+    }
+
+    if (ExternalSignal) {
+      if (ExternalSignal.aborted) {
+        Controller.abort()
+      } else {
+        ExternalSignal.addEventListener(
+          'abort',
+          CancelRequest,
+          { once: true }
+        )
+      }
+    }
+
+    const TimeoutId = setTimeout(() => {
+      Controller.abort()
+    }, RequestTimeout)
+
     try {
       const Response = await fetch(
-        `${BaseUrl}${Endpoint}`
+        `${BaseUrl}${Endpoint}`,
+        {
+          signal: Controller.signal,
+        }
       )
+
+      clearTimeout(TimeoutId)
+
+      if (ExternalSignal) {
+        ExternalSignal.removeEventListener(
+          'abort',
+          CancelRequest
+        )
+      }
 
       if (Response.ok) {
         return await Response.json()
@@ -35,23 +80,56 @@ async function FetchOpenF1(Endpoint) {
           `OpenF1 request failed with status ${Response.status}.`
         )
       }
+
+      const RetryAfterHeader =
+        Response.headers.get('Retry-After')
+
+      const RetryDelay = RetryAfterHeader
+        ? Number(RetryAfterHeader) * 1000
+        : Attempt * 1200
+
+      await Wait(RetryDelay)
     } catch (Error) {
-      if (Attempt === MaximumAttempts) {
+      clearTimeout(TimeoutId)
+
+      if (ExternalSignal) {
+        ExternalSignal.removeEventListener(
+          'abort',
+          CancelRequest
+        )
+      }
+
+      if (ExternalSignal?.aborted) {
         throw Error
       }
+
+      LastError = Error
+
+      if (Attempt === MaximumAttempts) {
+        break
+      }
+
+      await Wait(Attempt * 1200)
     }
-
-    const RetryDelay = Attempt * 1000
-
-    await Wait(RetryDelay)
   }
 
-  throw new Error('Unable to retrieve OpenF1 data.')
+  throw (
+    LastError ??
+    new Error('Unable to retrieve OpenF1 data.')
+  )
 }
 
-export async function GetRaceSessions(Year) {
+export async function GetRaceSessions(
+  Year,
+  Signal = null
+) {
+  if (RaceSessionCache.has(Year)) {
+    return RaceSessionCache.get(Year)
+  }
+
   const Data = await FetchOpenF1(
-    `/sessions?year=${Year}&session_name=Race`
+    `/sessions?year=${Year}&session_name=Race`,
+    Signal
   )
 
   const RaceSessions = Data
@@ -62,12 +140,25 @@ export async function GetRaceSessions(Year) {
         new Date(RaceB.date_start)
     )
 
+  RaceSessionCache.set(
+    Year,
+    RaceSessions
+  )
+
   return RaceSessions
 }
 
-export async function GetRaceResults(SessionKey) {
+export async function GetRaceResults(
+  SessionKey,
+  Signal = null
+) {
+  if (RaceResultCache.has(SessionKey)) {
+    return RaceResultCache.get(SessionKey)
+  }
+
   const Data = await FetchOpenF1(
-    `/session_result?session_key=${SessionKey}`
+    `/session_result?session_key=${SessionKey}`,
+    Signal
   )
 
   const SortedResults = [...Data].sort(
@@ -102,22 +193,55 @@ export async function GetRaceResults(SessionKey) {
     }
   )
 
+  RaceResultCache.set(
+    SessionKey,
+    SortedResults
+  )
+
   return SortedResults
 }
 
-export async function GetDrivers(SessionKey) {
+export async function GetDrivers(
+  SessionKey,
+  Signal = null
+) {
+  if (DriverCache.has(SessionKey)) {
+    return DriverCache.get(SessionKey)
+  }
+
   const Data = await FetchOpenF1(
-    `/drivers?session_key=${SessionKey}`
+    `/drivers?session_key=${SessionKey}`,
+    Signal
+  )
+
+  DriverCache.set(
+    SessionKey,
+    Data
   )
 
   return Data
 }
 
 export async function GetDriverChampionship(
-  SessionKey
+  SessionKey,
+  Signal = null
 ) {
+  if (
+    ChampionshipCache.has(SessionKey)
+  ) {
+    return ChampionshipCache.get(
+      SessionKey
+    )
+  }
+
   const Data = await FetchOpenF1(
-    `/championship_drivers?session_key=${SessionKey}`
+    `/championship_drivers?session_key=${SessionKey}`,
+    Signal
+  )
+
+  ChampionshipCache.set(
+    SessionKey,
+    Data
   )
 
   return Data
