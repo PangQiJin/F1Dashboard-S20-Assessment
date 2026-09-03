@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react'
 import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
+import {
   GetRaceSessions,
   GetRaceResults,
   GetDrivers,
@@ -11,17 +20,11 @@ function App() {
   const [Season, setSeason] = useState(2025)
 
   const [Races, setRaces] = useState([])
-  const [SelectedRace, setSelectedRace] =
-    useState(null)
+  const [SelectedRace, setSelectedRace] = useState(null)
+  const [RaceResults, setRaceResults] = useState([])
 
-  const [RaceResults, setRaceResults] =
-    useState([])
-
-  const [IsLoading, setIsLoading] =
-    useState(true)
-
-  const [ErrorMessage, setErrorMessage] =
-    useState('')
+  const [IsLoading, setIsLoading] = useState(true)
+  const [ErrorMessage, setErrorMessage] = useState('')
 
   const [
     IsResultsLoading,
@@ -49,8 +52,7 @@ function App() {
   ] = useState(0)
 
   useEffect(() => {
-    const Controller =
-      new AbortController()
+    const Controller = new AbortController()
 
     async function LoadRaces() {
       try {
@@ -96,8 +98,7 @@ function App() {
       return
     }
 
-    const Controller =
-      new AbortController()
+    const Controller = new AbortController()
 
     async function LoadRaceResults() {
       try {
@@ -173,12 +174,8 @@ function App() {
                 )
 
               if (
-                !Number.isNaN(
-                  PointsStart
-                ) &&
-                !Number.isNaN(
-                  PointsCurrent
-                )
+                !Number.isNaN(PointsStart) &&
+                !Number.isNaN(PointsCurrent)
               ) {
                 RacePoints = Number(
                   (
@@ -208,9 +205,7 @@ function App() {
             }
           })
 
-        if (
-          !Controller.signal.aborted
-        ) {
+        if (!Controller.signal.aborted) {
           setRaceResults(
             CombinedResults
           )
@@ -228,9 +223,7 @@ function App() {
 
         setRaceResults([])
       } finally {
-        if (
-          !Controller.signal.aborted
-        ) {
+        if (!Controller.signal.aborted) {
           setIsResultsLoading(false)
         }
       }
@@ -318,9 +311,7 @@ function App() {
     )
   }
 
-  function FormatRaceDate(
-    DateValue
-  ) {
+  function FormatRaceDate(DateValue) {
     if (!DateValue) {
       return 'Date unavailable'
     }
@@ -337,9 +328,7 @@ function App() {
     )
   }
 
-  function GetPositionDisplay(
-    Result
-  ) {
+  function GetPositionDisplay(Result) {
     if (
       Result.position !== null &&
       Result.position !== undefined
@@ -362,9 +351,7 @@ function App() {
     return '—'
   }
 
-  function GetPointsDisplay(
-    Result
-  ) {
+  function GetPointsDisplay(Result) {
     if (
       Result.points === null ||
       Result.points === undefined
@@ -374,6 +361,57 @@ function App() {
 
     return Result.points
   }
+
+  function GetShortDriverName(FullName) {
+    if (!FullName) {
+      return 'Unknown'
+    }
+
+    const NameParts =
+      FullName.trim().split(' ')
+
+    if (NameParts.length === 1) {
+      return NameParts[0]
+    }
+
+    return NameParts[
+      NameParts.length - 1
+    ]
+  }
+
+  const Winner =
+    RaceResults.find(
+      (Result) =>
+        Result.position === 1
+    ) ?? null
+
+  const ClassifiedDrivers =
+    RaceResults.filter(
+      (Result) =>
+        Result.position !== null &&
+        Result.position !== undefined
+    ).length
+
+  const PointsChartData =
+    RaceResults
+      .filter(
+        (Result) =>
+          Result.points !== null &&
+          Result.points !== undefined &&
+          Result.points > 0
+      )
+      .map((Result) => ({
+        driver: GetShortDriverName(
+          Result.full_name
+        ),
+        points: Result.points,
+      }))
+      .sort(
+        (ResultA, ResultB) =>
+          ResultB.points -
+          ResultA.points
+      )
+      .slice(0, 10)
 
   return (
     <div className="dashboard">
@@ -576,6 +614,149 @@ function App() {
               </p>
             </div>
           )}
+
+          {SelectedRace &&
+            !IsResultsLoading &&
+            !ResultsErrorMessage &&
+            RaceResults.length > 0 && (
+              <>
+                <div className="summary-grid">
+                  <div className="summary-card">
+                    <span className="summary-label">
+                      WINNER
+                    </span>
+
+                    <strong>
+                      {Winner
+                        ? Winner.full_name
+                        : 'Unavailable'}
+                    </strong>
+                  </div>
+
+                  <div className="summary-card">
+                    <span className="summary-label">
+                      WINNING TEAM
+                    </span>
+
+                    <strong>
+                      {Winner
+                        ? Winner.team_name
+                        : 'Unavailable'}
+                    </strong>
+                  </div>
+
+                  <div className="summary-card">
+                    <span className="summary-label">
+                      CLASSIFIED DRIVERS
+                    </span>
+
+                    <strong>
+                      {ClassifiedDrivers}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="chart-card">
+                  <div className="section-heading">
+                    <div>
+                      <p className="dashboard-label">
+                        RACE ANALYTICS
+                      </p>
+
+                      <h3>
+                        Driver Points
+                      </h3>
+                    </div>
+
+                    <span>
+                      Top point scorers
+                    </span>
+                  </div>
+
+                  {PointsChartData.length >
+                  0 ? (
+                    <div className="chart-container">
+                      <ResponsiveContainer
+                        width="100%"
+                        height="100%"
+                      >
+                        <BarChart
+                          data={
+                            PointsChartData
+                          }
+                          margin={{
+                            top: 10,
+                            right: 20,
+                            left: 0,
+                            bottom: 10,
+                          }}
+                        >
+                          <CartesianGrid
+                            stroke="#333333"
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+
+                          <XAxis
+                            dataKey="driver"
+                            stroke="#a8a8a8"
+                            tick={{
+                              fill: '#a8a8a8',
+                              fontSize: 12,
+                            }}
+                          />
+
+                          <YAxis
+                            stroke="#a8a8a8"
+                            tick={{
+                              fill: '#a8a8a8',
+                              fontSize: 12,
+                            }}
+                            allowDecimals={
+                              false
+                            }
+                          />
+
+                          <Tooltip
+                            cursor={{
+                              fill: '#292929',
+                            }}
+                            contentStyle={{
+                              backgroundColor:
+                                '#202020',
+                              border:
+                                '1px solid #444444',
+                              borderRadius:
+                                '6px',
+                              color:
+                                '#ffffff',
+                            }}
+                          />
+
+                          <Bar
+                            dataKey="points"
+                            name="Points"
+                            fill="#e10600"
+                            radius={[
+                              5,
+                              5,
+                              0,
+                              0,
+                            ]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="chart-empty">
+                      Points data is
+                      unavailable for this
+                      race.
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
 
           <div className="results-table">
             <div className="results-header">
