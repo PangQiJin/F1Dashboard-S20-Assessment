@@ -71,6 +71,11 @@ function App() {
   ] = useState(true)
 
   const [
+    ErrorTitle,
+    setErrorTitle,
+  ] = useState('')
+
+  const [
     ErrorMessage,
     setErrorMessage,
   ] = useState('')
@@ -154,6 +159,9 @@ function App() {
           return
         }
 
+        setErrorTitle('')
+        setErrorMessage('')
+
         setRaces(
           RaceData
         )
@@ -168,9 +176,28 @@ function App() {
           Error
         )
 
-        setErrorMessage(
-          'We could not retrieve the race list from OpenF1.'
-        )
+        // OpenF1 temporarily restricts unauthenticated API access
+        // while a live F1 session is taking place.
+        if (
+          Error.code ===
+          'OPENF1_LIVE_SESSION'
+        ) {
+          setErrorTitle(
+            'Temporarily unavailable'
+          )
+
+          setErrorMessage(
+            'A live F1 session is currently in progress, so OpenF1 has temporarily restricted free API access. Race data will be available again after the session ends.'
+          )
+        } else {
+          setErrorTitle(
+            'Unable to load races'
+          )
+
+          setErrorMessage(
+            'We could not retrieve the race list from OpenF1.'
+          )
+        }
 
         setRaces([])
       } finally {
@@ -251,11 +278,20 @@ function App() {
             PointsError
           )
 
-          // Championship points are treated as optional so a
-          // temporary failure does not hide the actual race results.
-          setPointsWarningMessage(
-            'Points are temporarily unavailable. Race results are still shown below.'
-          )
+          if (
+            PointsError.code ===
+            'OPENF1_LIVE_SESSION'
+          ) {
+            setPointsWarningMessage(
+              'Points are temporarily unavailable because OpenF1 is restricting free API access during a live F1 session.'
+            )
+          } else {
+            // Championship points are treated as optional so a
+            // temporary failure does not hide the actual race results.
+            setPointsWarningMessage(
+              'Points are temporarily unavailable. Race results are still shown below.'
+            )
+          }
         }
 
         // Merge data from multiple OpenF1 endpoints into one object
@@ -356,9 +392,18 @@ function App() {
           Error
         )
 
-        setResultsErrorMessage(
-          'We could not retrieve the results for this race.'
-        )
+        if (
+          Error.code ===
+          'OPENF1_LIVE_SESSION'
+        ) {
+          setResultsErrorMessage(
+            'A live F1 session is currently in progress, so OpenF1 has temporarily restricted free API access. Please try again after the session ends.'
+          )
+        } else {
+          setResultsErrorMessage(
+            'We could not retrieve the results for this race.'
+          )
+        }
 
         setRaceResults([])
       } finally {
@@ -422,6 +467,7 @@ function App() {
 
     ClearAnalyticsSelections()
 
+    setErrorTitle('')
     setErrorMessage('')
     setResultsErrorMessage('')
     setPointsWarningMessage('')
@@ -470,6 +516,7 @@ function App() {
   function RetryRaceList() {
     setRaces([])
 
+    setErrorTitle('')
     setErrorMessage('')
 
     setIsLoading(
@@ -571,6 +618,9 @@ function App() {
           }
           IsLoading={
             IsLoading
+          }
+          ErrorTitle={
+            ErrorTitle
           }
           ErrorMessage={
             ErrorMessage

@@ -16,6 +16,66 @@ function Wait(Milliseconds) {
   })
 }
 
+// Read the error information returned by OpenF1.
+// Some API errors include a useful "detail" field explaining
+// exactly why the request was rejected.
+async function GetErrorDetail(
+  Response
+) {
+  try {
+    const ErrorData =
+      await Response.json()
+
+    return (
+      ErrorData?.detail ??
+      ''
+    )
+  } catch {
+    return ''
+  }
+}
+
+// Create a structured error so the React application can
+// distinguish special OpenF1 conditions from normal failures.
+function CreateRequestError(
+  Status,
+  Detail = ''
+) {
+  const RequestError =
+    new Error(
+      Detail ||
+        `OpenF1 request failed with status ${Status}.`
+    )
+
+  RequestError.status =
+    Status
+
+  RequestError.code =
+    'OPENF1_REQUEST_FAILED'
+
+  RequestError.IsNonRetryable =
+    true
+
+  // During a live F1 session OpenF1 can temporarily restrict
+  // unauthenticated access to all API data, including historical data.
+  if (
+    Status === 401 &&
+    Detail
+      .toLowerCase()
+      .includes(
+        'live f1 session in progress'
+      )
+  ) {
+    RequestError.name =
+      'OpenF1LiveSessionError'
+
+    RequestError.code =
+      'OPENF1_LIVE_SESSION'
+  }
+
+  return RequestError
+}
+
 // Central OpenF1 request function.
 //
 // Requests are given a timeout and are automatically retried when
@@ -26,6 +86,44 @@ async function FetchOpenF1(
   Endpoint,
   ExternalSignal = null
 ) {
+  /*
+    Testing helper.
+
+    Adding ?simulateLive=1 to either the localhost or deployed
+    GitHub Pages URL simulates OpenF1's live-session restriction.
+
+    Example:
+    /F1Dashboard-S20-Assessment/?simulateLive=1
+
+    The normal application is completely unaffected when the
+    query parameter is not present.
+  */
+  const SimulateLiveSession =
+    new URLSearchParams(
+      window.location.search
+    ).get('simulateLive') === '1'
+
+  if (SimulateLiveSession) {
+    const SimulatedError =
+      new Error(
+        'Live F1 session in progress. Global API access is restricted to authenticated users until the session ends.'
+      )
+
+    SimulatedError.name =
+      'OpenF1LiveSessionError'
+
+    SimulatedError.status =
+      401
+
+    SimulatedError.code =
+      'OPENF1_LIVE_SESSION'
+
+    SimulatedError.IsNonRetryable =
+      true
+
+    throw SimulatedError
+  }
+
   let LastError = null
 
   for (
@@ -41,13 +139,17 @@ async function FetchOpenF1(
     }
 
     if (ExternalSignal) {
-      if (ExternalSignal.aborted) {
+      if (
+        ExternalSignal.aborted
+      ) {
         Controller.abort()
       } else {
         ExternalSignal.addEventListener(
           'abort',
           CancelRequest,
-          { once: true }
+          {
+            once: true,
+          }
         )
       }
     }
@@ -84,19 +186,38 @@ async function FetchOpenF1(
         return await Response.json()
       }
 
-      // Temporary API failures are worth retrying.
-      // Other HTTP errors are returned immediately.
       const ShouldRetry =
         Response.status === 429 ||
         Response.status >= 500
 
+      // Authentication/client errors will not normally be fixed
+      // by immediately repeating the same request.
+      if (!ShouldRetry) {
+        const ErrorDetail =
+          await GetErrorDetail(
+            Response
+          )
+
+        throw CreateRequestError(
+          Response.status,
+          ErrorDetail
+        )
+      }
+
+      // If all retry attempts have been used, return the final
+      // API error instead of retrying again.
       if (
-        !ShouldRetry ||
         Attempt ===
-          MaximumAttempts
+        MaximumAttempts
       ) {
-        throw new Error(
-          `OpenF1 request failed with status ${Response.status}.`
+        const ErrorDetail =
+          await GetErrorDetail(
+            Response
+          )
+
+        throw CreateRequestError(
+          Response.status,
+          ErrorDetail
         )
       }
 
@@ -133,6 +254,14 @@ async function FetchOpenF1(
       // normal API failures or retried.
       if (
         ExternalSignal?.aborted
+      ) {
+        throw Error
+      }
+
+      // Known client/API restrictions should be reported to the
+      // application immediately instead of wasting retry attempts.
+      if (
+        Error.IsNonRetryable
       ) {
         throw Error
       }
@@ -245,13 +374,11 @@ export async function GetRaceResults(
 
         const HasPositionA =
           PositionA !== null &&
-          PositionA !==
-            undefined
+          PositionA !== undefined
 
         const HasPositionB =
           PositionB !== null &&
-          PositionB !==
-            undefined
+          PositionB !== undefined
 
         if (
           HasPositionA &&

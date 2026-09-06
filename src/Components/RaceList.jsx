@@ -6,6 +6,7 @@ function RaceList({
   Races,
   SelectedRace,
   IsLoading,
+  ErrorTitle,
   ErrorMessage,
   IsResultsLoading,
   SelectRace,
@@ -45,7 +46,8 @@ function RaceList({
           ErrorMessage && (
             <div className="sidebar-state error-state">
               <strong>
-                Unable to load races
+                {ErrorTitle ||
+                  'Unable to load races'}
               </strong>
 
               <p>
